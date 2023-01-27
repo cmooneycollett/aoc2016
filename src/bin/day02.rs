@@ -1,9 +1,49 @@
+use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
+
+use lazy_static::lazy_static;
+
+use aoc_utils::cartography::Point2D;
 
 const PROBLEM_NAME: &str = "Bathroom Security";
 const PROBLEM_INPUT_FILE: &str = "./input/day02.txt";
 const PROBLEM_DAY: u64 = 2;
+
+lazy_static! {
+    static ref PART1_KEYPAD: HashMap<Point2D, char> = HashMap::from([
+        (Point2D::new(0, 0), '1'),
+        (Point2D::new(1, 0), '2'),
+        (Point2D::new(2, 0), '3'),
+        (Point2D::new(0, 1), '4'),
+        (Point2D::new(1, 1), '5'),
+        (Point2D::new(2, 1), '6'),
+        (Point2D::new(0, 2), '7'),
+        (Point2D::new(1, 2), '8'),
+        (Point2D::new(2, 2), '9'),
+    ]);
+}
+
+/// Represents the four different movement directions used in AOC 2016 Day 02.
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    /// Determines the corresponding Direction from the given character.
+    fn from_char(c: char) -> Option<Direction> {
+        match c {
+            'U' => Some(Direction::Up),
+            'D' => Some(Direction::Down),
+            'L' => Some(Direction::Left),
+            'R' => Some(Direction::Right),
+            _ => None,
+        }
+    }
+}
 
 /// Processes the AOC 2016 Day 02 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
@@ -40,21 +80,45 @@ pub fn main() {
 
 /// Processes the AOC 2016 Day 02 input file in the format required by the solver functions.
 /// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+fn process_input_file(filename: &str) -> Vec<Vec<Direction>> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    raw_input
+        .trim()
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| Direction::from_char(c).unwrap())
+                .collect::<Vec<Direction>>()
+        })
+        .collect::<Vec<Vec<Direction>>>()
 }
 
-/// Solves AOC 2016 Day 02 Part 1 // ###
-fn solve_part1(_input: &String) -> String {
-    unimplemented!();
+/// Solves AOC 2016 Day 02 Part 1 // Determines the keypad combination for the simple keypad.
+fn solve_part1(lines: &[Vec<Direction>]) -> String {
+    let mut combo = String::new();
+    let mut loc = Point2D::new(1, 1);
+    for line in lines {
+        for dirn in line {
+            let new_loc = match dirn {
+                Direction::Up => loc.peek_shift(0, -1),
+                Direction::Down => loc.peek_shift(0, 1),
+                Direction::Left => loc.peek_shift(-1, 0),
+                Direction::Right => loc.peek_shift(1, 0),
+            };
+            if PART1_KEYPAD.contains_key(&new_loc) {
+                loc = new_loc;
+            }
+        }
+        combo.push(*PART1_KEYPAD.get(&loc).unwrap());
+    }
+    combo
 }
 
 /// Solves AOC 2016 Day 02 Part 2 // ###
-fn solve_part2(_input: &String) -> String {
-    unimplemented!();
+fn solve_part2(_lines: &[Vec<Direction>]) -> String {
+    String::from("")
 }
 
 #[cfg(test)]
