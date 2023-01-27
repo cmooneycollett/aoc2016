@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
 
@@ -12,7 +13,7 @@ const PROBLEM_DAY: u64 = 1;
 /// Represents the two different turn directions possible.
 enum Turn {
     Left,
-    Right
+    Right,
 }
 
 impl Turn {
@@ -87,10 +88,12 @@ fn solve_part1(instructions: &[(Turn, i64)]) -> u64 {
     let start_loc = Point2D::new(0, 0);
     let mut loc = start_loc;
     for (turn, steps) in instructions.iter() {
-        match turn {
-            Turn::Left => direction = direction.rotate90_counterclockwise(1),
-            Turn::Right => direction = direction.rotate90_clockwise(1),
-        }
+        // Conduct the left or right turn
+        direction = match turn {
+            Turn::Left => direction.rotate90_counterclockwise(1),
+            Turn::Right => direction.rotate90_clockwise(1),
+        };
+        // Update the location by the number of steps conducted
         match direction {
             CardinalDirection::North => loc.shift(0, -steps),
             CardinalDirection::East => loc.shift(*steps, 0),
@@ -98,13 +101,40 @@ fn solve_part1(instructions: &[(Turn, i64)]) -> u64 {
             CardinalDirection::West => loc.shift(-steps, 0),
         }
     }
+    // Find the Manhattan distance between the end location and the start location
     start_loc.get_manhattan_distance(&loc)
 }
 
 /// Solves AOC 2016 Day 1 Part 2 // Determines the distance from the origin of the first location
 /// that the protagonist visits twice.
-fn solve_part2(_instructions: &[(Turn, i64)]) -> u64 {
-    unimplemented!();
+fn solve_part2(instructions: &[(Turn, i64)]) -> u64 {
+    let mut direction = CardinalDirection::North;
+    let start_loc = Point2D::new(0, 0);
+    let mut loc = start_loc;
+    let mut visited: HashSet<Point2D> = HashSet::from([loc]);
+    'outer: for (turn, steps) in instructions.iter() {
+        // Conduct the left or right turn
+        direction = match turn {
+            Turn::Left => direction.rotate90_counterclockwise(1),
+            Turn::Right => direction.rotate90_clockwise(1),
+        };
+        // Determine how to adjust location on each step
+        let (dx, dy) = match direction {
+            CardinalDirection::North => (0, -1),
+            CardinalDirection::East => (1, 0),
+            CardinalDirection::South => (0, 1),
+            CardinalDirection::West => (-1, 0),
+        };
+        // Conduct each step and check if the location has already been visited
+        for _ in 0..*steps {
+            loc.shift(dx, dy);
+            if !visited.insert(loc) {
+                break 'outer;
+            }
+        }
+    }
+    // Find the Manhattan distance between the end location and the start location
+    start_loc.get_manhattan_distance(&loc)
 }
 
 #[cfg(test)]
