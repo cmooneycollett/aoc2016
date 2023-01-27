@@ -1,7 +1,7 @@
 use std::fs;
 use std::time::Instant;
 
-const PROBLEM_NAME: &str = "###";
+const PROBLEM_NAME: &str = "No Time for a Taxicab";
 const PROBLEM_INPUT_FILE: &str = "./input/day01.txt";
 const PROBLEM_DAY: u64 = 1;
 
@@ -48,12 +48,12 @@ fn process_input_file(filename: &str) -> String {
 }
 
 /// Solves AOC 2016 Day 1 Part 1 // ###
-fn solve_part1(_input: &String) -> String {
+fn solve_part1(_input: &String) -> u64 {
     unimplemented!();
 }
 
 /// Solves AOC 2016 Day 1 Part 2 // ###
-fn solve_part2(_input: &String) -> String {
+fn solve_part2(_input: &String) -> u64 {
     unimplemented!();
 }
 
@@ -65,17 +65,15 @@ mod test {
     #[test]
     fn test_day01_part1_actual() {
         let input = process_input_file(PROBLEM_INPUT_FILE);
-        let _solution = solve_part1(&input);
-        unimplemented!();
-        // assert_eq!("###", solution);
+        let solution = solve_part1(&input);
+        assert_eq!(332, solution);
     }
 
     /// Tests the Day 1 Part 2 solver method against the actual problem solution.
     #[test]
     fn test_day01_part2_actual() {
         let input = process_input_file(PROBLEM_INPUT_FILE);
-        let _solution = solve_part2(&input);
-        unimplemented!();
-        // assert_eq!("###", solution);
+        let solution = solve_part2(&input);
+        assert_eq!(166, solution);
     }
 }
