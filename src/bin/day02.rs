@@ -22,6 +22,21 @@ lazy_static! {
         (Point2D::new(1, 2), '8'),
         (Point2D::new(2, 2), '9'),
     ]);
+    static ref PART2_KEYPAD: HashMap<Point2D, char> = HashMap::from([
+        (Point2D::new(2, 0), '1'),
+        (Point2D::new(1, 1), '2'),
+        (Point2D::new(2, 1), '3'),
+        (Point2D::new(3, 1), '4'),
+        (Point2D::new(0, 2), '5'),
+        (Point2D::new(1, 2), '6'),
+        (Point2D::new(2, 2), '7'),
+        (Point2D::new(3, 2), '8'),
+        (Point2D::new(4, 2), '9'),
+        (Point2D::new(1, 3), 'A'),
+        (Point2D::new(2, 3), 'B'),
+        (Point2D::new(3, 3), 'C'),
+        (Point2D::new(2, 4), 'D'),
+    ]);
 }
 
 /// Represents the four different movement directions used in AOC 2016 Day 02.
@@ -79,7 +94,7 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 02 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is vector containing sequence of directions for each instruction line.
 fn process_input_file(filename: &str) -> Vec<Vec<Direction>> {
     // Read contents of problem input file
     let raw_input = fs::read_to_string(filename).unwrap();
@@ -96,29 +111,42 @@ fn process_input_file(filename: &str) -> Vec<Vec<Direction>> {
 }
 
 /// Solves AOC 2016 Day 02 Part 1 // Determines the keypad combination for the simple keypad.
-fn solve_part1(lines: &[Vec<Direction>]) -> String {
+fn solve_part1(instructions: &[Vec<Direction>]) -> String {
+    process_keypad_instructions(&PART1_KEYPAD, instructions, &Point2D::new(1, 1))
+}
+
+/// Solves AOC 2016 Day 02 Part 2 // Determines the keypad combination for the complex keypad.
+fn solve_part2(instructions: &[Vec<Direction>]) -> String {
+    process_keypad_instructions(&PART2_KEYPAD, instructions, &Point2D::new(0, 2))
+}
+
+/// Processes the instructions for the keypad and determines the resulting keypad combination.
+fn process_keypad_instructions(
+    keypad: &HashMap<Point2D, char>,
+    instructions: &[Vec<Direction>],
+    start_loc: &Point2D,
+) -> String {
     let mut combo = String::new();
-    let mut loc = Point2D::new(1, 1);
-    for line in lines {
+    let mut loc = *start_loc;
+    for line in instructions {
+        // Process each step in the current instruction line
         for dirn in line {
+            // Get the new location that would result from following the current step
             let new_loc = match dirn {
                 Direction::Up => loc.peek_shift(0, -1),
                 Direction::Down => loc.peek_shift(0, 1),
                 Direction::Left => loc.peek_shift(-1, 0),
                 Direction::Right => loc.peek_shift(1, 0),
             };
-            if PART1_KEYPAD.contains_key(&new_loc) {
+            // Only update the current location if the next location is on the keypad
+            if keypad.contains_key(&new_loc) {
                 loc = new_loc;
             }
         }
-        combo.push(*PART1_KEYPAD.get(&loc).unwrap());
+        // Add the button to the keypad combination
+        combo.push(*keypad.get(&loc).unwrap());
     }
     combo
-}
-
-/// Solves AOC 2016 Day 02 Part 2 // ###
-fn solve_part2(_lines: &[Vec<Direction>]) -> String {
-    String::from("")
 }
 
 #[cfg(test)]
