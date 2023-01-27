@@ -1,9 +1,30 @@
 use std::fs;
 use std::time::Instant;
 
+use fancy_regex::Regex;
+
+use aoc_utils::cartography::{CardinalDirection, Point2D};
+
 const PROBLEM_NAME: &str = "No Time for a Taxicab";
 const PROBLEM_INPUT_FILE: &str = "./input/day01.txt";
 const PROBLEM_DAY: u64 = 1;
+
+/// Represents the two different turn directions possible.
+enum Turn {
+    Left,
+    Right
+}
+
+impl Turn {
+    /// Gets the turn direction represented by the given character.
+    fn from_char(c: char) -> Option<Turn> {
+        match c {
+            'L' => Some(Turn::Left),
+            'R' => Some(Turn::Right),
+            _ => None,
+        }
+    }
+}
 
 /// Processes the AOC 2016 Day 1 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
@@ -39,21 +60,50 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 1 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is vector of instructions containing a turn direction (L or R) and number of
+/// steps as a tuple.
+fn process_input_file(filename: &str) -> Vec<(Turn, i64)> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    let mut instructions: Vec<(Turn, i64)> = vec![];
+    let regex_element = Regex::new(r"([LR])(\d+)").unwrap();
+    for element in raw_input.trim().split(", ") {
+        if let Ok(Some(caps)) = regex_element.captures(element) {
+            let turn = Turn::from_char(caps[1].chars().next().unwrap()).unwrap();
+            let steps = caps[2].parse::<i64>().unwrap();
+            instructions.push((turn, steps));
+        } else {
+            panic!("Bad element in input file! // {element}");
+        }
+    }
+    instructions
 }
 
-/// Solves AOC 2016 Day 1 Part 1 // ###
-fn solve_part1(_input: &String) -> u64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 1 Part 1 // Processes each instruction and determines how far the
+/// protagonist ends up from the origin.
+fn solve_part1(instructions: &[(Turn, i64)]) -> u64 {
+    let mut direction = CardinalDirection::North;
+    let start_loc = Point2D::new(0, 0);
+    let mut loc = start_loc;
+    for (turn, steps) in instructions.iter() {
+        match turn {
+            Turn::Left => direction = direction.rotate90_counterclockwise(1),
+            Turn::Right => direction = direction.rotate90_clockwise(1),
+        }
+        match direction {
+            CardinalDirection::North => loc.shift(0, -steps),
+            CardinalDirection::East => loc.shift(*steps, 0),
+            CardinalDirection::South => loc.shift(0, *steps),
+            CardinalDirection::West => loc.shift(-steps, 0),
+        }
+    }
+    start_loc.get_manhattan_distance(&loc)
 }
 
-/// Solves AOC 2016 Day 1 Part 2 // ###
-fn solve_part2(_input: &String) -> u64 {
+/// Solves AOC 2016 Day 1 Part 2 // Determines the distance from the origin of the first location
+/// that the protagonist visits twice.
+fn solve_part2(_instructions: &[(Turn, i64)]) -> u64 {
     unimplemented!();
 }
 
