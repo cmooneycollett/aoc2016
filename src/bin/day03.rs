@@ -23,14 +23,14 @@ pub fn main() {
     let p2_duration = p2_timestamp.duration_since(p1_timestamp);
     // Print results
     println!("==================================================");
-    println!("AOC 2016 Day {} - \"{}\"", PROBLEM_DAY, PROBLEM_NAME);
-    println!("[+] Part 1: {}", p1_solution);
-    println!("[+] Part 2: {}", p2_solution);
+    println!("AOC 2016 Day {PROBLEM_DAY} - \"{PROBLEM_NAME}\"");
+    println!("[+] Part 1: {p1_solution}");
+    println!("[+] Part 2: {p2_solution}");
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     println!("Execution times:");
-    println!("[+] Input:  {:.2?}", input_parser_duration);
-    println!("[+] Part 1: {:.2?}", p1_duration);
-    println!("[+] Part 2: {:.2?}", p2_duration);
+    println!("[+] Input:  {input_parser_duration:.2?}");
+    println!("[+] Part 1: {p1_duration:.2?}");
+    println!("[+] Part 2: {p2_duration:.2?}");
     println!(
         "[*] TOTAL:  {:.2?}",
         input_parser_duration + p1_duration + p2_duration
@@ -39,22 +39,46 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 03 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is vector of three-tuples of values from the input file lines.
+fn process_input_file(filename: &str) -> Vec<(u64, u64, u64)> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    let mut triangles: Vec<(u64, u64, u64)> = vec![];
+    for line in raw_input.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let tri = line
+            .split_ascii_whitespace()
+            .map(|elem| elem.parse::<u64>().unwrap())
+            .collect::<Vec<u64>>();
+        if tri.len() != 3 {
+            panic!("Invalid input file line! // {line}");
+        }
+        triangles.push((tri[0], tri[1], tri[2]));
+    }
+    triangles
 }
 
-/// Solves AOC 2016 Day 03 Part 1 // ###
-fn solve_part1(_input: &String) -> u64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 03 Part 1 // Determines how many of the triangles are possible under the
+/// problem rules (i.e., the sum of any two sides is greater than the remaining side).
+fn solve_part1(triangles: &[(u64, u64, u64)]) -> usize {
+    triangles
+        .iter()
+        .filter(|tri| is_triangle_valid(tri))
+        .count()
 }
 
 /// Solves AOC 2016 Day 03 Part 2 // ###
-fn solve_part2(_input: &String) -> u64 {
-    unimplemented!();
+fn solve_part2(_triangles: &[(u64, u64, u64)]) -> usize {
+    0
+}
+
+/// Checks if the sum of any two elements is greater than the remaining element.
+fn is_triangle_valid(tri: &(u64, u64, u64)) -> bool {
+    tri.0 + tri.1 > tri.2 && tri.0 + tri.2 > tri.1 && tri.1 + tri.2 > tri.0
 }
 
 #[cfg(test)]
