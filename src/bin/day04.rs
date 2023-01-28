@@ -1,6 +1,10 @@
 use std::fs;
 use std::time::Instant;
 
+use fancy_regex::Regex;
+
+use aoc2016::utils::bespoke::Room;
+
 const PROBLEM_NAME: &str = "Security Through Obscurity";
 const PROBLEM_INPUT_FILE: &str = "./input/day04.txt";
 const PROBLEM_DAY: u64 = 4;
@@ -40,20 +44,38 @@ pub fn main() {
 
 /// Processes the AOC 2016 Day 04 input file in the format required by the solver functions.
 /// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+fn process_input_file(filename: &str) -> Vec<Room> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    let regex_line = Regex::new(r"^([a-z\-]+)-(\d+)\[([a-z]{5})\]$").unwrap();
+    let mut rooms: Vec<Room> = vec![];
+    for line in raw_input.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Ok(Some(caps)) = regex_line.captures(line) {
+            let name = &caps[1];
+            let sector_id = caps[2].parse::<u64>().unwrap();
+            let checksum = &caps[3];
+            rooms.push(Room::new(name, sector_id, checksum));
+        }
+    }
+    rooms
 }
 
-/// Solves AOC 2016 Day 04 Part 1 // ###
-fn solve_part1(_input: &String) -> u64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 04 Part 1 // Determines the sum of the sector IDs for the real rooms.
+fn solve_part1(rooms: &[Room]) -> u64 {
+    rooms
+        .iter()
+        .filter(|room| room.is_real_room())
+        .map(|room| room.sector_id())
+        .sum()
 }
 
 /// Solves AOC 2016 Day 04 Part 2 // ###
-fn solve_part2(_input: &String) -> u64 {
+fn solve_part2(_rooms: &[Room]) -> u64 {
     unimplemented!();
 }
 
