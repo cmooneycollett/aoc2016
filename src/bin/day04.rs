@@ -9,6 +9,8 @@ const PROBLEM_NAME: &str = "Security Through Obscurity";
 const PROBLEM_INPUT_FILE: &str = "./input/day04.txt";
 const PROBLEM_DAY: u64 = 4;
 
+const TARGET_DECRYPTED_NAME: &str = "northpole object storage";
+
 /// Processes the AOC 2016 Day 04 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
 pub fn main() {
@@ -57,7 +59,7 @@ fn process_input_file(filename: &str) -> Vec<Room> {
         }
         if let Ok(Some(caps)) = regex_line.captures(line) {
             let name = &caps[1];
-            let sector_id = caps[2].parse::<u64>().unwrap();
+            let sector_id = caps[2].parse::<u32>().unwrap();
             let checksum = &caps[3];
             rooms.push(Room::new(name, sector_id, checksum));
         }
@@ -66,7 +68,7 @@ fn process_input_file(filename: &str) -> Vec<Room> {
 }
 
 /// Solves AOC 2016 Day 04 Part 1 // Determines the sum of the sector IDs for the real rooms.
-fn solve_part1(rooms: &[Room]) -> u64 {
+fn solve_part1(rooms: &[Room]) -> u32 {
     rooms
         .iter()
         .filter(|room| room.is_real_room())
@@ -75,8 +77,13 @@ fn solve_part1(rooms: &[Room]) -> u64 {
 }
 
 /// Solves AOC 2016 Day 04 Part 2 // ###
-fn solve_part2(_rooms: &[Room]) -> u64 {
-    unimplemented!();
+fn solve_part2(rooms: &[Room]) -> u32 {
+    rooms
+        .iter()
+        .filter(|room| room.decrypted_name() == TARGET_DECRYPTED_NAME)
+        .map(|room| room.sector_id())
+        .next()
+        .unwrap()
 }
 
 #[cfg(test)]

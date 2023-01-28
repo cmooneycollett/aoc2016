@@ -5,12 +5,12 @@ use std::collections::HashMap;
 /// (https://adventofcode.com/2016/day/4).
 pub struct Room {
     name: String,
-    sector_id: u64,
+    sector_id: u32,
     checksum: String,
 }
 
 impl Room {
-    pub fn new(name: &str, sector_id: u64, checksum: &str) -> Room {
+    pub fn new(name: &str, sector_id: u32, checksum: &str) -> Room {
         Room {
             name: name.to_string(),
             sector_id,
@@ -24,7 +24,7 @@ impl Room {
     }
 
     /// Gets the value of the "sector_id" field.
-    pub fn sector_id(&self) -> u64 {
+    pub fn sector_id(&self) -> u32 {
         self.sector_id
     }
 
@@ -63,6 +63,16 @@ impl Room {
 
     /// Determines the unencrypted name for the room.
     pub fn decrypted_name(&self) -> String {
-        unimplemented!();
+        let mut decrypted_name = String::new();
+        for c in self.name.chars() {
+            if c == '-' {
+                decrypted_name.push(' ');
+                continue;
+            }
+            let c_shifted =
+                char::from_u32('a' as u32 + (c as u32 - 'a' as u32 + self.sector_id) % 26).unwrap();
+            decrypted_name.push(c_shifted);
+        }
+        decrypted_name
     }
 }
