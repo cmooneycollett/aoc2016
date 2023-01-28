@@ -65,15 +65,41 @@ fn process_input_file(filename: &str) -> Vec<(u64, u64, u64)> {
 /// Solves AOC 2016 Day 03 Part 1 // Determines how many of the triangles are possible under the
 /// problem rules (i.e., the sum of any two sides is greater than the remaining side).
 fn solve_part1(triangles: &[(u64, u64, u64)]) -> usize {
+    get_valid_triangles_count(triangles)
+}
+
+/// Solves AOC 2016 Day 03 Part 2 // Determines how many of the triangles are possible after
+/// conducting a vertical transposition of the triangles.
+fn solve_part2(triangles: &[(u64, u64, u64)]) -> usize {
+    let triangles = transpose_triangles(triangles);
+    get_valid_triangles_count(&triangles)
+}
+
+/// Determines the number of triangles that are valid (i.e., the sum of any two sides is greater
+/// than the remaining side).
+fn get_valid_triangles_count(triangles: &[(u64, u64, u64)]) -> usize {
     triangles
         .iter()
         .filter(|tri| is_triangle_valid(tri))
         .count()
 }
 
-/// Solves AOC 2016 Day 03 Part 2 // ###
-fn solve_part2(_triangles: &[(u64, u64, u64)]) -> usize {
-    0
+/// Transposes the triangles by taking the vertical groups of three. Any rows at the end that are
+/// remaining from previous groups of three rows are excluded.
+fn transpose_triangles(triangles: &[(u64, u64, u64)]) -> Vec<(u64, u64, u64)> {
+    let mut transposed: Vec<(u64, u64, u64)> = vec![];
+    for i in (0..triangles.len()).step_by(3) {
+        if i + 2 >= triangles.len() {
+            break;
+        }
+        // Left
+        transposed.push((triangles[i].0, triangles[i + 1].0, triangles[i + 2].0));
+        // Middle
+        transposed.push((triangles[i].1, triangles[i + 1].1, triangles[i + 2].1));
+        // Right
+        transposed.push((triangles[i].2, triangles[i + 1].2, triangles[i + 2].2));
+    }
+    transposed
 }
 
 /// Checks if the sum of any two elements is greater than the remaining element.
