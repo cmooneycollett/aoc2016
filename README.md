@@ -1,4 +1,4 @@
-# Advent of Code [YEAR]
+# Advent of Code 2016
 
-Template Rust project for Advent of Code challenges.
+My solutions for [Advent of Code 2016](https://adventofcode.com/2016) in Rust.
  
