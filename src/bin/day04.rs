@@ -45,7 +45,7 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 04 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is vector of Rooms extracted from the lines of the input file.
 fn process_input_file(filename: &str) -> Vec<Room> {
     // Read contents of problem input file
     let raw_input = fs::read_to_string(filename).unwrap();
@@ -76,7 +76,7 @@ fn solve_part1(rooms: &[Room]) -> u32 {
         .sum()
 }
 
-/// Solves AOC 2016 Day 04 Part 2 // ###
+/// Solves AOC 2016 Day 04 Part 2 // Finds the sector of the Room keeping the presents.
 fn solve_part2(rooms: &[Room]) -> u32 {
     rooms
         .iter()
