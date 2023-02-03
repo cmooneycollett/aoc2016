@@ -54,16 +54,16 @@ fn process_input_file(filename: &str) -> Vec<Vec<char>> {
         .collect::<Vec<Vec<char>>>()
 }
 
-/// Solves AOC 2016 Day 06 Part 1 // Determines the error-corrected message by taking the
-/// most-common character at each index across all of the messages.
+/// Solves AOC 2016 Day 06 Part 1 // Determines the error-corrected message by taking the most
+/// common character at each index across all of the messages.
 fn solve_part1(messages: &[Vec<char>]) -> String {
     let mut message_corrected = String::new();
     let pos_char_counts = get_position_character_counts(messages);
     for pos_count in pos_char_counts {
-        // Get the most-common character at the current index
+        // Get the most common character at the current index
         let c = pos_count
             .iter()
-            .max_by(|a, b| a.1.cmp(b.1))
+            .max_by_key(|a| a.1)
             .map(|(k, _v)| k)
             .unwrap();
         message_corrected.push(*c);
@@ -71,9 +71,21 @@ fn solve_part1(messages: &[Vec<char>]) -> String {
     message_corrected
 }
 
-/// Solves AOC 2016 Day 06 Part 2 // ###
-fn solve_part2(_messages: &[Vec<char>]) -> String {
-    String::new()
+/// Solves AOC 2016 Day 06 Part 2 // Determines the error-corrected message by taking the least
+/// common character at each index across all of the messages.
+fn solve_part2(messages: &[Vec<char>]) -> String {
+    let mut message_corrected = String::new();
+    let pos_char_counts = get_position_character_counts(messages);
+    for pos_count in pos_char_counts {
+        // Get the least common character at the current index
+        let c = pos_count
+            .iter()
+            .min_by_key(|a| a.1)
+            .map(|(k, _v)| k)
+            .unwrap();
+        message_corrected.push(*c);
+    }
+    message_corrected
 }
 
 /// Returns a vector of hashmaps containing the total number of times each character is observed at
