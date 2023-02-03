@@ -23,14 +23,14 @@ pub fn main() {
     let p2_duration = p2_timestamp.duration_since(p1_timestamp);
     // Print results
     println!("==================================================");
-    println!("AOC 2016 Day {} - \"{}\"", PROBLEM_DAY, PROBLEM_NAME);
-    println!("[+] Part 1: {}", p1_solution);
-    println!("[+] Part 2: {}", p2_solution);
+    println!("AOC 2016 Day {PROBLEM_DAY} - \"{PROBLEM_NAME}\"");
+    println!("[+] Part 1: {p1_solution}");
+    println!("[+] Part 2: {p2_solution}");
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     println!("Execution times:");
-    println!("[+] Input:  {:.2?}", input_parser_duration);
-    println!("[+] Part 1: {:.2?}", p1_duration);
-    println!("[+] Part 2: {:.2?}", p2_duration);
+    println!("[+] Input:  {input_parser_duration:.2?}");
+    println!("[+] Part 1: {p1_duration:.2?}");
+    println!("[+] Part 2: {p2_duration:.2?}");
     println!(
         "[*] TOTAL:  {:.2?}",
         input_parser_duration + p1_duration + p2_duration
@@ -39,22 +39,39 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 05 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is the string given in the input file.
 fn process_input_file(filename: &str) -> String {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    raw_input.trim().to_string()
 }
 
-/// Solves AOC 2016 Day 05 Part 1 // ###
-fn solve_part1(_input: &String) -> String {
-    unimplemented!();
+/// Solves AOC 2016 Day 05 Part 1 // Determines the eight-character door passcode by finding eight
+/// md5 hex digests starting with five zeroes and taking the sixth character.
+fn solve_part1(seed: &str) -> String {
+    let mut passcode = String::new();
+    let mut i: u64 = 0;
+    for _ in 0..8 {
+        // Find next character for the passcode
+        loop {
+            // Calculate md5 hex digest and increment index
+            let digest = md5::compute(format!("{seed}{i}").as_bytes());
+            let hex_digest = format!("{digest:x}");
+            i += 1;
+            // Check if md5 hex digest starting with five zeroes has been found
+            if hex_digest.starts_with("00000") {
+                passcode.push(hex_digest.chars().nth(5).unwrap());
+                break;
+            }
+        }
+    }
+    passcode
 }
 
 /// Solves AOC 2016 Day 05 Part 2 // ###
-fn solve_part2(_input: &String) -> String {
-    unimplemented!();
+fn solve_part2(_seed: &str) -> String {
+    String::new()
 }
 
 #[cfg(test)]

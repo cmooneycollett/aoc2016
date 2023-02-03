@@ -10,3 +10,4 @@ authors = ["Connor Mooney-Collett <connor.mooneycollett@gmail.com>"]
 aoc-utils = { git = "https://github.com/misfits42/aoc-utils", branch = "main" }
 fancy-regex = "0.10.0"
 lazy_static = "1.4.0"
+md5 = "0.7.0"
