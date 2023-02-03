@@ -30,8 +30,8 @@ pub fn main() {
     // Print results
     println!("==================================================");
     println!("AOC 2016 Day {PROBLEM_DAY} - \"{PROBLEM_NAME}\"");
-    println!("[+] Part 1: {p1_solution}", );
-    println!("[+] Part 2: {p2_solution}", );
+    println!("[+] Part 1: {p1_solution}");
+    println!("[+] Part 2: {p2_solution}");
     println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     println!("Execution times:");
     println!("[+] Input:  {input_parser_duration:.2?}");
