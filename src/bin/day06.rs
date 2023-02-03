@@ -1,3 +1,5 @@
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
 
@@ -39,22 +41,60 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 06 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is vector of strings given as the lines of the input file.
+fn process_input_file(filename: &str) -> Vec<Vec<char>> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    raw_input
+        .trim()
+        .lines()
+        .map(|line| line.trim().chars().collect::<Vec<char>>())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<Vec<char>>>()
 }
 
-/// Solves AOC 2016 Day 06 Part 1 // ###
-fn solve_part1(_input: &String) -> String {
-    unimplemented!();
+/// Solves AOC 2016 Day 06 Part 1 // Determines the error-corrected message by taking the
+/// most-common character at each index across all of the messages.
+fn solve_part1(messages: &[Vec<char>]) -> String {
+    let mut message_corrected = String::new();
+    let pos_char_counts = get_position_character_counts(messages);
+    for pos_count in pos_char_counts {
+        // Get the most-common character at the current index
+        let c = pos_count
+            .iter()
+            .max_by(|a, b| a.1.cmp(b.1))
+            .map(|(k, _v)| k)
+            .unwrap();
+        message_corrected.push(*c);
+    }
+    message_corrected
 }
 
 /// Solves AOC 2016 Day 06 Part 2 // ###
-fn solve_part2(_input: &String) -> String {
-    unimplemented!();
+fn solve_part2(_messages: &[Vec<char>]) -> String {
+    String::new()
+}
+
+/// Returns a vector of hashmaps containing the total number of times each character is observed at
+/// each index across all of the messages.
+fn get_position_character_counts(messages: &[Vec<char>]) -> Vec<HashMap<char, u64>> {
+    let mut char_pos_counts: Vec<HashMap<char, u64>> = vec![];
+    for message in messages {
+        for (i, c) in message.iter().enumerate() {
+            // Add a new empty hashmap if the current index hasn't been considered yet
+            if char_pos_counts.len() <= i {
+                char_pos_counts.push(HashMap::new());
+            }
+            // Initialise the character count or increment the character count
+            if let Entry::Vacant(e) = char_pos_counts[i].entry(*c) {
+                e.insert(1);
+            } else {
+                *char_pos_counts[i].get_mut(c).unwrap() += 1;
+            }
+        }
+    }
+    char_pos_counts
 }
 
 #[cfg(test)]
