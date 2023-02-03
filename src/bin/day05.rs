@@ -69,9 +69,34 @@ fn solve_part1(seed: &str) -> String {
     passcode
 }
 
-/// Solves AOC 2016 Day 05 Part 2 // ###
-fn solve_part2(_seed: &str) -> String {
-    String::new()
+/// Solves AOC 2016 Day 05 Part 2 // Determines the eight-character door passcode by treating the
+/// sixth character of the "nice" md5 hex digests as the index into the door passcode.
+fn solve_part2(seed: &str) -> String {
+    let mut passcode: [Option<char>; 8] = [None; 8];
+    let mut i: u64 = 0;
+    for _ in 0..8 {
+        // Find the next character for the passcode
+        loop {
+            // Calculate md5 hex digest and increment index
+            let digest = md5::compute(format!("{seed}{i}").as_bytes());
+            let hex_digest = format!("{digest:x}");
+            i += 1;
+            // Check if md5 hex digest starting with five zeroes has been found
+            if hex_digest.starts_with("00000") {
+                let chars = hex_digest.chars().collect::<Vec<char>>();
+                if let Some(index) = chars[5].to_digit(10) {
+                    let index = index as usize;
+                    if index > 7 || passcode[index].is_some() {
+                        continue;
+                    }
+                    let passchar = chars[6];
+                    passcode[index] = Some(passchar);
+                    break;
+                }
+            }
+        }
+    }
+    passcode.iter().map(|c| c.unwrap()).collect::<String>()
 }
 
 #[cfg(test)]
