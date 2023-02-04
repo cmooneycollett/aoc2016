@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
 
@@ -71,9 +72,13 @@ fn solve_part1(ipv7_addresses: &[String]) -> usize {
         .count()
 }
 
-/// Solves AOC 2016 Day 07 Part 2 // ###
-fn solve_part2(_ipv7_addresses: &[String]) -> usize {
-    0
+/// Solves AOC 2016 Day 07 Part 2 // Determines the number of the given "IPv7" addresses that
+/// support "SSL" (super-secret listening).
+fn solve_part2(ipv7_addresses: &[String]) -> usize {
+    ipv7_addresses
+        .iter()
+        .filter(|addr| check_ssl_support(addr))
+        .count()
 }
 
 /// Checks if the given "IPv7" address supports "TLS" (transport-layer snooping).
@@ -102,6 +107,32 @@ fn check_tls_support(ipv7_address: &str) -> bool {
     true
 }
 
+/// Checks if the given "IPv7" address supports "SSL" (super-secret listening).
+fn check_ssl_support(ipv7_address: &str) -> bool {
+    let (supernets, hypernets) = extract_supernet_and_hypernet_sequences(ipv7_address);
+    // Find the possible BAB candidates
+    let mut bab_candidates: HashSet<String> = HashSet::new();
+    for supernet in supernets.iter() {
+        let supernet = supernet.chars().collect::<Vec<char>>();
+        for (i, c) in supernet.iter().enumerate().take(supernet.len() - 2) {
+            let c1 = supernet[i + 1];
+            let c2 = supernet[i + 2];
+            if *c == c2 && *c != c1 {
+                bab_candidates.insert(format!("{c1}{c}{c1}"));
+            }
+        }
+    }
+    // Check if any of the hypernets contain one of the BAB candidates
+    for hypernet in hypernets.iter() {
+        for bab in bab_candidates.iter() {
+            if hypernet.contains(bab) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// Extracts the supernet and hypernet sequences from the given ipv7 address (assuming that there
 /// are no hypernet sequences nested within other hypernet sequences).
 fn extract_supernet_and_hypernet_sequences(ipv7_address: &str) -> (Vec<String>, Vec<String>) {
@@ -116,8 +147,8 @@ fn extract_supernet_and_hypernet_sequences(ipv7_address: &str) -> (Vec<String>, 
         .collect::<Vec<String>>();
     // Extract hypernets
     let hypernets = REGEX_HYPERNET
-        .find_iter(ipv7_address)
-        .map(|cap| cap.unwrap().as_str().to_owned())
+        .captures_iter(ipv7_address)
+        .map(|cap| cap.unwrap()[1].to_string())
         .collect::<Vec<String>>();
     (supernets, hypernets)
 }
