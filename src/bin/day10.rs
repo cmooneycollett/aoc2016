@@ -13,7 +13,7 @@ const PROBLEM_DAY: u64 = 10;
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum SolutionPart {
     PartOne,
-    _PartTwo,
+    PartTwo,
 }
 
 /// Represents a single entity that can receive microchips.
@@ -115,6 +115,7 @@ fn process_input_file(filename: &str) -> ProblemInput {
             let low_id = caps[3].parse::<u64>().unwrap();
             let high_target = Entity::from_string(&caps[4]).unwrap();
             let high_id = caps[5].parse::<u64>().unwrap();
+            // Initialise holder for low target
             match low_target {
                 Entity::Output => _ = output_held.insert(low_id, vec![]),
                 Entity::Robot => {
@@ -123,6 +124,7 @@ fn process_input_file(filename: &str) -> ProblemInput {
                     }
                 }
             }
+            // Initialise holder for high target
             match high_target {
                 Entity::Output => _ = output_held.insert(high_id, vec![]),
                 Entity::Robot => {
@@ -131,6 +133,7 @@ fn process_input_file(filename: &str) -> ProblemInput {
                     }
                 }
             }
+            // Record the instruction against the bot ID
             bot_instructions.insert(
                 bot_id,
                 Instruction {
@@ -153,9 +156,10 @@ fn solve_part1(input: &ProblemInput) -> u64 {
     process_bot_instructions(input, SolutionPart::PartOne)
 }
 
-/// Solves AOC 2016 Day 10 Part 2 // ###
-fn solve_part2(_input: &ProblemInput) -> u64 {
-    0
+/// Solves AOC 2016 Day 10 Part 2 // Find the product of the values held in outputs 0, 1 and 2 when
+/// each contains one microchip.
+fn solve_part2(input: &ProblemInput) -> u64 {
+    process_bot_instructions(input, SolutionPart::PartTwo)
 }
 
 /// Processes the robot instructions based on the start state and returns the result required by the
@@ -165,7 +169,18 @@ fn process_bot_instructions(input: &ProblemInput, solution_part: SolutionPart) -
     let mut bot_held = input.1.clone();
     let mut output_held = input.2.clone();
     loop {
-        for (id, instruct) in bot_instructions.iter() {
+        let mut check_outputs = false;
+        for (id, instr) in bot_instructions.iter() {
+            // Check for Part Two solution
+            if solution_part == SolutionPart::PartTwo && check_outputs {
+                let output0 = output_held.get(&0).unwrap();
+                let output1 = output_held.get(&1).unwrap();
+                let output2 = output_held.get(&2).unwrap();
+                if output0.len() == 1 && output1.len() == 1 && output2.len() == 1 {
+                    return output0[0] * output1[0] * output2[0];
+                }
+                check_outputs = false;
+            }
             if bot_held.get(id).unwrap().len() < 2 {
                 continue;
             }
@@ -174,26 +189,29 @@ fn process_bot_instructions(input: &ProblemInput, solution_part: SolutionPart) -
                 let bot_values = bot_held.get_mut(id).unwrap();
                 (bot_values[0], bot_values[1])
             };
-            // Check if the target bot has been identified
+            // Check for Part One solution
             if solution_part == SolutionPart::PartOne && bot_low == 17 && bot_high == 61 {
                 return *id;
             }
             // Allocate the bot low-value and high-value microchips to a bot or output
-            match instruct.low_target {
-                Entity::Output => output_held.get_mut(&instruct.low_id).unwrap().push(bot_low),
+            match instr.low_target {
+                Entity::Output => {
+                    output_held.get_mut(&instr.low_id).unwrap().push(bot_low);
+                    check_outputs = true;
+                }
                 Entity::Robot => {
-                    bot_held.get_mut(&instruct.low_id).unwrap().push(bot_low);
-                    bot_held.get_mut(&instruct.low_id).unwrap().sort();
+                    bot_held.get_mut(&instr.low_id).unwrap().push(bot_low);
+                    bot_held.get_mut(&instr.low_id).unwrap().sort();
                 }
             }
-            match instruct.high_target {
-                Entity::Output => output_held
-                    .get_mut(&instruct.high_id)
-                    .unwrap()
-                    .push(bot_high),
+            match instr.high_target {
+                Entity::Output => {
+                    output_held.get_mut(&instr.high_id).unwrap().push(bot_high);
+                    check_outputs = true;
+                }
                 Entity::Robot => {
-                    bot_held.get_mut(&instruct.high_id).unwrap().push(bot_high);
-                    bot_held.get_mut(&instruct.high_id).unwrap().sort();
+                    bot_held.get_mut(&instr.high_id).unwrap().push(bot_high);
+                    bot_held.get_mut(&instr.high_id).unwrap().sort();
                 }
             }
             // Remove the microchips from the current bot and record the instruction for removal
