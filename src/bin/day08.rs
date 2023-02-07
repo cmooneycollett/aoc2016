@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
 
@@ -11,11 +12,43 @@ const PROBLEM_DAY: u64 = 8;
 
 const SCREEN_WIDTH: usize = 50;
 const SCREEN_HEIGHT: usize = 6;
+const CHAR_WIDTH: usize = 5;
 
 lazy_static! {
     static ref REGEX_RECT: Regex = Regex::new(r"^rect (\d+)x(\d+)$").unwrap();
     static ref REGEX_ROTATE_ROW: Regex = Regex::new(r"^rotate row y=(\d+) by (\d+)$").unwrap();
     static ref REGEX_ROTATE_COL: Regex = Regex::new(r"^rotate column x=(\d+) by (\d+)$").unwrap();
+
+    /// Maps the binary representation of the screen characters (5px wide by 6px tall) to the
+    /// corresponding character displayed on the screen.
+    static ref SCREEN_CHARS: HashMap<u32, char> = HashMap::from([
+        (0x19297A52, 'A'),
+        (0x392E4A5C, 'B'),
+        (0x1D08420E, 'C'),
+        (0x39294A5C, 'D'),
+        (0x3D0F421E, 'E'),
+        (0x3D0E4210, 'F'),
+        (0x3D285A5E, 'G'),
+        (0x252F4A52, 'H'),
+        (0x3E42109F, 'I'),
+        (0x0C210A4C, 'J'),
+        (0x254C6292, 'K'),
+        (0x2108421E, 'L'),
+        (0x23BAC631, 'M'),
+        (0x239ACE31, 'N'),
+        (0x3D294A5E, 'O'),
+        (0x39297210, 'P'),
+        (0x192949C1, 'Q'),
+        (0x39297292, 'R'),
+        (0x1D08305C, 'S'),
+        (0x3E421084, 'T'),
+        (0x25294A4C, 'U'),
+        (0x2318C544, 'V'),
+        (0x231AD6BF, 'W'),
+        (0x22A21151, 'X'),
+        (0x22A21084, 'Y'),
+        (0x3C22221E, 'Z'),
+    ]);
 }
 
 /// Represents a single instruction used to operate on the pixels of the screen.
@@ -93,13 +126,38 @@ fn process_input_file(filename: &str) -> Vec<Instruction> {
 }
 
 /// Solves AOC 2016 Day 08 Part 1 // Returns the number of pixels that are lit after processing the
-/// instructions for the 50x6 pixel screen starting with all pixels set to off.
+/// instructions for the 50px-by-6px screen starting with all pixels set to off.
 fn solve_part1(instructions: &[Instruction]) -> usize {
+    // Generate the initial screen and process the instructions
     let mut screen: [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT] = [[false; SCREEN_WIDTH]; SCREEN_HEIGHT];
+    process_screen_instructions(instructions, &mut screen);
+    // Count the number of pixels that are lit
+    screen
+        .iter()
+        .map(|row| row.iter().filter(|e| **e).count())
+        .sum()
+}
+
+/// Solves AOC 2016 Day 08 Part 2 // Determines the 10-letter sequence displayed on the 50px-by-6px
+/// screen after processing all of the instructions.
+fn solve_part2(instructions: &[Instruction]) -> String {
+    // Generate the initial screen and process the instructions
+    let mut screen: [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT] = [[false; SCREEN_WIDTH]; SCREEN_HEIGHT];
+    process_screen_instructions(instructions, &mut screen);
+    // Decode the letter sequence displayed on the screen
+    decode_screen_letters(&screen)
+}
+
+/// Processes the instructions for the screen, updating the screen state by processing the
+/// instructions.
+fn process_screen_instructions(
+    instructions: &[Instruction],
+    screen: &mut [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT],
+) {
     for instruct in instructions.iter() {
         match instruct {
             Instruction::Rect { width, height } => {
-                for (x, y) in iproduct!(0..*width, 0..*height) {
+                for (y, x) in iproduct!(0..*height, 0..*width) {
                     screen[y][x] = true;
                 }
             }
@@ -122,16 +180,29 @@ fn solve_part1(instructions: &[Instruction]) -> usize {
             }
         }
     }
-    // Count the number of pixels that are lit
-    screen
-        .iter()
-        .map(|row| row.iter().filter(|e| **e).count())
-        .sum()
 }
 
-/// Solves AOC 2016 Day 08 Part 2 // ###
-fn solve_part2(_instructions: &[Instruction]) -> String {
-    String::new()
+/// Returns the letter sequence displayed by the screen by decoding the letters displayed by the
+/// letter pixel groups (5px wide and 6px tall).
+fn decode_screen_letters(screen: &[[bool; SCREEN_WIDTH]; SCREEN_HEIGHT]) -> String {
+    let mut decoded = String::new();
+    for i in 0..(SCREEN_WIDTH / CHAR_WIDTH) {
+        let mut key = 0;
+        let mut power = (CHAR_WIDTH * SCREEN_HEIGHT) as u32;
+        for (y, x) in iproduct!(0..SCREEN_HEIGHT, (i * CHAR_WIDTH)..((i + 1) * CHAR_WIDTH)) {
+            power -= 1;
+            if screen[y][x] {
+                key += u32::pow(2, power);
+            }
+        }
+        // Get the letter displayed in the current window
+        if let Some(c) = SCREEN_CHARS.get(&key) {
+            decoded.push(*c);
+        } else {
+            decoded.push('#');
+        }
+    }
+    decoded
 }
 
 #[cfg(test)]
