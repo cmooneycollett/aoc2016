@@ -60,9 +60,10 @@ fn solve_part1(input: &str) -> usize {
     calculate_decompressed_length(input, false)
 }
 
-/// Solves AOC 2016 Day 09 Part 2 // ###
-fn solve_part2(_input: &str) -> usize {
-    0
+/// Solves AOC 2016 Day 09 Part 2 // Determines the decompressed length of the input string, where
+/// nested marker sequences are decompressed (version two decompression).
+fn solve_part2(input: &str) -> usize {
+    calculate_decompressed_length(input, true)
 }
 
 /// Calculates the decompressed length of the given string, using the length and number of repeats
