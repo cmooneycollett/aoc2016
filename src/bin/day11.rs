@@ -42,7 +42,7 @@ struct FacilityState {
     moves: usize,
     /// Current floor of the elevator
     elev_floor: usize,
-    /// State of the floor comps
+    /// State of the floor comps - floors need to be in sorted order to enable stable hashing
     floor_comps: Vec<BTreeSet<Component>>,
 }
 
@@ -118,9 +118,18 @@ fn solve_part1(floor_comps: &[BTreeSet<Component>]) -> usize {
     calculate_minimum_moves_to_top_floor(floor_comps).unwrap()
 }
 
-/// Solves AOC 2016 Day 11 Part 2 // ###
-fn solve_part2(_floor_comps: &[BTreeSet<Component>]) -> usize {
-    0
+/// Solves AOC 2016 Day 11 Part 2 // Calculates the minimum number of moves required to move the
+/// given Components and the additional components (elerium and dilithium generator-microchip pairs
+/// starting on the first floor) to the top floor.
+fn solve_part2(floor_comps: &[BTreeSet<Component>]) -> usize {
+    // Add the additional components to the first floor
+    let mut floor_comps = floor_comps.to_owned();
+    floor_comps[0].insert(Component::new(ComponentType::Generator, "elerium"));
+    floor_comps[0].insert(Component::new(ComponentType::Microchip, "elerium"));
+    floor_comps[0].insert(Component::new(ComponentType::Generator, "dilithium"));
+    floor_comps[0].insert(Component::new(ComponentType::Microchip, "dilithium"));
+    // Calculate the minimum number of moves needed to move all items to the top floor
+    calculate_minimum_moves_to_top_floor(&floor_comps).unwrap()
 }
 
 /// Determines the minimum number of moves required to move all Components to the top floor.
@@ -162,8 +171,10 @@ fn get_next_states(state: &FacilityState) -> Vec<FacilityState> {
         state.floor_comps[state.elev_floor].iter().combinations(2),
         state.floor_comps[state.elev_floor].iter().combinations(1),
     );
-    let mut two_moved_up = false;
-    let mut one_moved_down = false;
+    let mut next_states_two_up: Vec<FacilityState> = vec![];
+    let mut next_states_one_up: Vec<FacilityState> = vec![];
+    let mut next_states_two_down: Vec<FacilityState> = vec![];
+    let mut next_states_one_down: Vec<FacilityState> = vec![];
     for comps in move_options {
         for floor_delta in [1, -1] {
             // Skip move if at top or bottom floor and no floor to move to
@@ -173,11 +184,11 @@ fn get_next_states(state: &FacilityState) -> Vec<FacilityState> {
                 continue;
             }
             // Don't move one component up if two components can be moved up
-            if floor_delta == 1 && two_moved_up && comps.len() == 1 {
+            if floor_delta == 1 && !next_states_two_up.is_empty() && comps.len() == 1 {
                 continue;
             }
             // Don't move two components down if one component can be moved down
-            if floor_delta == -1 && one_moved_down && comps.len() == 1 {
+            if floor_delta == -1 && !next_states_one_down.is_empty() && comps.len() == 2 {
                 continue;
             }
             // Don't move down if all floors below are empty
@@ -208,24 +219,38 @@ fn get_next_states(state: &FacilityState) -> Vec<FacilityState> {
                 continue;
             }
             // We have now found a valid next state
-            if floor_delta == 1 && comps.len() == 2 {
-                two_moved_up = true;
-            } else if floor_delta == -1 && comps.len() == 1 {
-                one_moved_down = true;
+            match floor_delta {
+                1 => match comps.len() {
+                    1 => next_states_one_up.push(next_state),
+                    2 => {
+                        next_states_one_up = vec![];
+                        next_states_two_up.push(next_state);
+                    }
+                    _ => (),
+                },
+                -1 => match comps.len() {
+                    1 => {
+                        next_states_two_down = vec![];
+                        next_states_one_down.push(next_state);
+                    }
+                    2 => next_states_two_down.push(next_state),
+                    _ => (),
+                },
+                _ => (),
             }
-            next_states.push(next_state);
         }
     }
+    // Combine the valid next states into single collection
+    next_states.append(&mut next_states_two_up);
+    next_states.append(&mut next_states_two_down);
+    next_states.append(&mut next_states_one_up);
+    next_states.append(&mut next_states_one_down);
     next_states
 }
 
 /// Checks if the given floor represents a valid state. A floor is invalid if it contains a
 /// microchip without its matching generator in the presence of a mismatched generator
 fn validate_floor(floor: &BTreeSet<Component>) -> bool {
-    // Valid if no Components on the floor
-    if floor.is_empty() {
-        return true;
-    }
     // Extract the names of the generators and microchips
     let generators = floor
         .iter()
