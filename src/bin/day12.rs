@@ -1,6 +1,8 @@
 use std::fs;
 use std::time::Instant;
 
+use aoc2016::utils::bespoke::AssembunnyInterpreter;
+
 const PROBLEM_NAME: &str = "Leonardo's Monorail";
 const PROBLEM_INPUT_FILE: &str = "./input/day12.txt";
 const PROBLEM_DAY: u64 = 12;
@@ -39,22 +41,25 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 12 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is Assembunny interpreter created from the instructions listed in the iput file.
+fn process_input_file(filename: &str) -> AssembunnyInterpreter {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    AssembunnyInterpreter::new(&raw_input).unwrap()
 }
 
-/// Solves AOC 2016 Day 12 Part 1 // ###
-fn solve_part1(_input: &String) -> i64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 12 Part 1 // Returns the value held in register 'a' of the Assembunny
+/// interpreter after executing the program.
+fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
+    let mut interpreter = interpreter.clone();
+    interpreter.execute();
+    interpreter.get_register('a').unwrap()
 }
 
 /// Solves AOC 2016 Day 12 Part 2 // ###
-fn solve_part2(_input: &String) -> i64 {
-    unimplemented!();
+fn solve_part2(_interpreter: &AssembunnyInterpreter) -> isize {
+    0
 }
 
 #[cfg(test)]
