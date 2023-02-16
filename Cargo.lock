@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "aoc-utils"
 version = "0.1.0"
-source = "git+https://github.com/misfits42/aoc-utils?branch=main#0947273ce520acaed99126e7efef043f04975cf6"
+source = "git+https://github.com/misfits42/aoc-utils?branch=main#9d5e90f755e7b6ea2b4fdea220de23292a9cd78f"
 
 [[package]]
 name = "aoc2016"
