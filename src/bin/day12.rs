@@ -57,9 +57,13 @@ fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
     interpreter.get_register('a').unwrap()
 }
 
-/// Solves AOC 2016 Day 12 Part 2 // ###
-fn solve_part2(_interpreter: &AssembunnyInterpreter) -> isize {
-    0
+/// Solves AOC 2016 Day 12 Part 2 // Returns the value held in register 'a' of the Assembunny
+/// interpreter after executing the program, with register 'c' initialised to 1.
+fn solve_part2(interpreter: &AssembunnyInterpreter) -> isize {
+    let mut interpreter = interpreter.clone();
+    let _ = interpreter.set_register('c', 1);
+    interpreter.execute();
+    interpreter.get_register('a').unwrap()
 }
 
 #[cfg(test)]
