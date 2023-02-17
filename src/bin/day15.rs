@@ -1,9 +1,37 @@
 use std::fs;
 use std::time::Instant;
 
+use fancy_regex::Regex;
+
 const PROBLEM_NAME: &str = "Timing is Everything";
 const PROBLEM_INPUT_FILE: &str = "./input/day15.txt";
 const PROBLEM_DAY: u64 = 15;
+
+/// Represents a single disc containing multiple positions, one of which has the hole in it.
+struct Disc {
+    id: u64,
+    total_positions: u64,
+    offset: u64,
+}
+
+impl Disc {
+    pub fn new(id: u64, total_positions: u64, start_position: u64) -> Disc {
+        let offset = total_positions - start_position;
+        Disc {
+            id,
+            total_positions,
+            offset,
+        }
+    }
+
+    /// Checks if the ball would fall through the hole in the disc if dropped at the specified time.
+    pub fn validate_time(&self, time: u64) -> bool {
+        if time + self.id < self.offset {
+            return false;
+        }
+        (time + self.id - self.offset) % self.total_positions == 0
+    }
+}
 
 /// Processes the AOC 2016 Day 15 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
@@ -39,22 +67,59 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 15 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is vector of Discs specified by the lines of the input file.
+fn process_input_file(filename: &str) -> Vec<Disc> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    let regex_disc =
+        Regex::new(r"^Disc #(\d+) has (\d+) positions; at time=0, it is at position (\d+).$")
+            .unwrap();
+    let mut discs: Vec<Disc> = vec![];
+    for line in raw_input.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if let Ok(Some(caps)) = regex_disc.captures(line) {
+            let id = caps[1].parse::<u64>().unwrap();
+            let total_positions = caps[2].parse::<u64>().unwrap();
+            let start_position = caps[3].parse::<u64>().unwrap();
+            discs.push(Disc::new(id, total_positions, start_position));
+        }
+    }
+    discs
 }
 
-/// Solves AOC 2016 Day 15 Part 1 // ###
-fn solve_part1(_input: &String) -> u64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 15 Part 1 // Determines the first time at which the ball could be dropped
+/// and still pass through the hole in each disc.
+fn solve_part1(discs: &[Disc]) -> u64 {
+    find_first_valid_drop_time(discs)
 }
 
 /// Solves AOC 2016 Day 15 Part 2 // ###
-fn solve_part2(_input: &String) -> u64 {
+fn solve_part2(_discs: &[Disc]) -> u64 {
     unimplemented!();
+}
+
+/// Finds the first time at which the ball could be dropped and still pass through the hole in each
+/// disc.
+fn find_first_valid_drop_time(discs: &[Disc]) -> u64 {
+    let mut time: u64 = 0;
+    loop {
+        let mut valid_time = true;
+        for disc in discs {
+            if !disc.validate_time(time) {
+                valid_time = false;
+                break;
+            }
+        }
+        if !valid_time {
+            time += 1;
+            continue;
+        }
+        return time;
+    }
 }
 
 #[cfg(test)]
