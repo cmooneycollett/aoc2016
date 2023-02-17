@@ -39,22 +39,72 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 16 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is seed sequence given in the input file.
 fn process_input_file(filename: &str) -> String {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    raw_input.trim().to_string()
 }
 
-/// Solves AOC 2016 Day 16 Part 1 // ###
-fn solve_part1(_input: &str) -> String {
-    unimplemented!();
+/// Solves AOC 2016 Day 16 Part 1 // Determines the checksum of the modified dragon curve data
+/// needed to fill a disk with size 272 units.
+fn solve_part1(seed: &str) -> String {
+    let blob = generate_dragon_curve_data(seed, 272);
+    generate_dragon_curve_checksum(&blob)
 }
 
 /// Solves AOC 2016 Day 16 Part 2 // ###
-fn solve_part2(_input: &str) -> String {
-    unimplemented!();
+fn solve_part2(_seed: &str) -> String {
+    String::new()
+}
+
+/// Processes the dragon curve data blob using the checksum calculation until the checksum has an
+/// off number of characters.
+fn generate_dragon_curve_checksum(blob: &str) -> String {
+    let mut checksum = blob.to_string();
+    while checksum.len() % 2 == 0 {
+        checksum = apply_checksum_iteration(&checksum);
+    }
+    checksum
+}
+
+/// Applies a single iteration of the dragon curve checksum calculation to the dragon curve data
+/// blob.
+fn apply_checksum_iteration(blob: &str) -> String {
+    if blob.len() % 2 == 1 {
+        return blob.to_string();
+    }
+    let blob_chars = blob.chars().collect::<Vec<char>>();
+    let mut checksum = String::new();
+    for (i, c) in blob_chars.iter().enumerate().step_by(2) {
+        let c1 = blob_chars[i + 1];
+        match c.eq(&c1) {
+            true => checksum.push('1'),
+            false => checksum.push('0'),
+        }
+    }
+    checksum
+}
+
+/// Generates a blob of dragon curve data from the given seed that is the same length as the given
+/// disk length.
+fn generate_dragon_curve_data(seed: &str, disk_length: usize) -> String {
+    let mut blob = seed.to_string();
+    while blob.len() < disk_length {
+        blob = apply_dragon_curve_iteration(&blob);
+    }
+    blob.chars().take(disk_length).collect::<String>()
+}
+
+/// Generates a new dragon curve blob using the given blob as input to the iteration.
+fn apply_dragon_curve_iteration(blob: &str) -> String {
+    let b_half = blob
+        .chars()
+        .rev()
+        .map(|c| if c == '0' { '1' } else { '0' })
+        .collect::<String>();
+    format!("{blob}0{b_half}")
 }
 
 #[cfg(test)]
