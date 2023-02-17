@@ -54,9 +54,11 @@ fn solve_part1(seed: &str) -> String {
     generate_dragon_curve_checksum(&blob)
 }
 
-/// Solves AOC 2016 Day 16 Part 2 // ###
-fn solve_part2(_seed: &str) -> String {
-    String::new()
+/// Solves AOC 2016 Day 16 Part 2 // Determines the checksum of the modified dragon curve data
+/// needed to fill a disk with size 35651584 units.
+fn solve_part2(seed: &str) -> String {
+    let blob = generate_dragon_curve_data(seed, 35651584);
+    generate_dragon_curve_checksum(&blob)
 }
 
 /// Processes the dragon curve data blob using the checksum calculation until the checksum has an
