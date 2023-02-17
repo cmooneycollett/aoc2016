@@ -69,9 +69,10 @@ fn solve_part1(vault_code: &str) -> String {
     find_shortest_path_to_vault(vault_code, &LOC_START, &LOC_TARGET).unwrap()
 }
 
-/// Solves AOC 2016 Day 17 Part 2 // ###
-fn solve_part2(_input: &str) -> usize {
-    unimplemented!();
+/// Solves AOC 2016 Day 17 Part 2 // Determines the length of the longest path that reaches the
+/// vault location from the start location.
+fn solve_part2(vault_code: &str) -> usize {
+    find_longest_path_length_to_vault(vault_code, &LOC_START, &LOC_TARGET).unwrap()
 }
 
 /// Determines the shortest path string needed to go from the start location to the vault location.
@@ -97,6 +98,31 @@ fn find_shortest_path_to_vault(
     None
 }
 
+/// Determines the length of the longest path that reaches the vault location from the start
+/// location.
+fn find_longest_path_length_to_vault(
+    vault_code: &str,
+    loc_start: &Point2D,
+    loc_vault: &Point2D,
+) -> Option<usize> {
+    let initial_state = PathState {loc: *loc_start, path: String::new()};
+    let mut state_queue: VecDeque<PathState> = VecDeque::from([initial_state]);
+    let mut longest_path_length: Option<usize> = None;
+    while !state_queue.is_empty() {
+        let state = state_queue.pop_front().unwrap();
+        if state.loc == *loc_vault {
+            if longest_path_length.is_none() || longest_path_length.unwrap() < state.path.len() {
+                longest_path_length = Some(state.path.len());
+            }
+            continue;
+        }
+        for next_state in find_next_valid_states(vault_code, &state) {
+            state_queue.push_back(next_state);
+        }
+    }
+    longest_path_length
+}
+
 /// Determines the next valid states from the current state.
 fn find_next_valid_states(vault_code: &str, state: &PathState) -> Vec<PathState> {
     let mut valid_states: Vec<PathState> = vec![];
@@ -107,28 +133,28 @@ fn find_next_valid_states(vault_code: &str, state: &PathState) -> Vec<PathState>
     if OPEN_CHARS.contains(&check_chars[0]) {
         valid_states.push(PathState {
             loc: state.loc.peek_shift(0, -1),
-            path: format!("{}U", state.path),
+            path: state.path.to_string() + "U",
         });
     }
     // DOWN - 'D'
     if OPEN_CHARS.contains(&check_chars[1]) {
         valid_states.push(PathState {
             loc: state.loc.peek_shift(0, 1),
-            path: format!("{}D", state.path),
+            path: state.path.to_string() + "D",
         });
     }
     // LEFT - 'L'
     if OPEN_CHARS.contains(&check_chars[2]) {
         valid_states.push(PathState {
             loc: state.loc.peek_shift(-1, 0),
-            path: format!("{}L", state.path),
+            path: state.path.to_string() + "L",
         });
     }
     // RIGHT - 'R'
     if OPEN_CHARS.contains(&check_chars[3]) {
         valid_states.push(PathState {
             loc: state.loc.peek_shift(1, 0),
-            path: format!("{}R", state.path),
+            path: state.path.to_string() + "R",
         });
     }
     valid_states
