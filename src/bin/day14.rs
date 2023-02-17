@@ -73,21 +73,22 @@ fn process_input_file(filename: &str) -> String {
 
 /// Solves AOC 2016 Day 14 Part 1 // Determines the index that produces the 64th one-time pad key.
 fn solve_part1(salt: &str) -> usize {
-    find_index_of_target_ord_otp_key(salt, TARGET_OTP_ORD)
+    find_index_of_target_ord_otp_key(salt, TARGET_OTP_ORD, false)
 }
 
-/// Solves AOC 2016 Day 14 Part 2 // ###
-fn solve_part2(_salt: &str) -> usize {
-    0
+/// Solves AOC 2016 Day 14 Part 2 // Determines the index that produces the 64th one-time pad key,
+/// with key stretching enabled.
+fn solve_part2(salt: &str) -> usize {
+    find_index_of_target_ord_otp_key(salt, TARGET_OTP_ORD, true)
 }
 
 /// Determins the index of the one-time pad key that is the nth valid key.
-fn find_index_of_target_ord_otp_key(salt: &str, nth_key: usize) -> usize {
+fn find_index_of_target_ord_otp_key(salt: &str, nth_key: usize, use_key_stretching: bool) -> usize {
     let mut details_queue: VecDeque<Md5HashDetails> = VecDeque::new();
     let mut five_groups_enqueued: HashSet<char> = HashSet::new();
     // Initialise the buffer of MD5 hash details
     for index in 0..HASH_BUFFER_LEN {
-        let md5_hash_details = calculate_md5_hash_details(salt, index, false);
+        let md5_hash_details = calculate_md5_hash_details(salt, index, use_key_stretching);
         five_groups_enqueued.extend(md5_hash_details.five_groups.iter());
         details_queue.push_back(md5_hash_details);
     }
@@ -99,8 +100,11 @@ fn find_index_of_target_ord_otp_key(salt: &str, nth_key: usize) -> usize {
             five_groups_enqueued.remove(&c);
         }
         // Generate next md5 hash details and adjust five-groups enqueue
-        let new_md5_hash_details =
-            calculate_md5_hash_details(salt, key_details.index + HASH_BUFFER_LEN, false);
+        let new_md5_hash_details = calculate_md5_hash_details(
+            salt,
+            key_details.index + HASH_BUFFER_LEN,
+            use_key_stretching,
+        );
         five_groups_enqueued.extend(new_md5_hash_details.five_groups.iter());
         details_queue.push_back(new_md5_hash_details);
         // Check if the current key is a valid key
