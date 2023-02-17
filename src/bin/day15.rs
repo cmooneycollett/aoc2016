@@ -8,6 +8,7 @@ const PROBLEM_INPUT_FILE: &str = "./input/day15.txt";
 const PROBLEM_DAY: u64 = 15;
 
 /// Represents a single disc containing multiple positions, one of which has the hole in it.
+#[derive(Copy, Clone)]
 struct Disc {
     id: u64,
     total_positions: u64,
@@ -97,9 +98,12 @@ fn solve_part1(discs: &[Disc]) -> u64 {
     find_first_valid_drop_time(discs)
 }
 
-/// Solves AOC 2016 Day 15 Part 2 // ###
-fn solve_part2(_discs: &[Disc]) -> u64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 15 Part 2 // Determines the first time at which the ball could be dropped
+/// and still pass through the hole in each disc, with the additional disc added to the end.
+fn solve_part2(discs: &[Disc]) -> u64 {
+    let mut discs = discs.to_vec();
+    discs.push(Disc::new((discs.len() + 1) as u64, 11, 0));
+    find_first_valid_drop_time(&discs)
 }
 
 /// Finds the first time at which the ball could be dropped and still pass through the hole in each
