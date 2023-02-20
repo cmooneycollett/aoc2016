@@ -9,7 +9,7 @@ const PROBLEM_INPUT_FILE: &str = "./input/day18.txt";
 const PROBLEM_DAY: u64 = 18;
 
 const PART1_TOTAL_ROWS: usize = 40;
-const _PART2_TOTAL_ROWS: usize = 400000;
+const PART2_TOTAL_ROWS: usize = 400000;
 
 lazy_static! {
     static ref REGEX_TRAP: Regex = Regex::new(r"\^\^\.|\.\^\^|\^\.\.|\.\.\^").unwrap();
@@ -62,23 +62,27 @@ fn solve_part1(first_row: &str) -> usize {
     calculate_total_safe_tiles(first_row, PART1_TOTAL_ROWS)
 }
 
-/// Solves AOC 2016 Day 18 Part 2 // ###
-fn solve_part2(_first_row: &str) -> usize {
-    0
+/// Solves AOC 2016 Day 18 Part 2 // Determines how many safe tiles there are in the first 400,000
+/// rows.
+fn solve_part2(first_row: &str) -> usize {
+    calculate_total_safe_tiles(first_row, PART2_TOTAL_ROWS)
 }
 
 /// Calculates the number of safe tiles there are in the given number of rows, starting from the
 /// given first row.
 fn calculate_total_safe_tiles(first_row: &str, total_rows: usize) -> usize {
+    // Calculate first row safe tile count and have total_rows edge cases
     let mut total_safe_tiles = first_row.chars().filter(|c| *c == '.').count();
     if total_rows == 0 {
         return 0;
     } else if total_rows == 1 {
         return total_safe_tiles;
     }
+    // Consider each row after the first
     let mut prior_row = first_row.chars().collect::<Vec<char>>();
     for _ in 1..total_rows {
         let mut next_row: Vec<char> = vec![];
+        // Determine new character for next row for each character in the prior row
         for i in 0..prior_row.len() {
             let header = generate_header(&prior_row, i).unwrap();
             match REGEX_TRAP.is_match(&header).unwrap() {
@@ -86,6 +90,7 @@ fn calculate_total_safe_tiles(first_row: &str, total_rows: usize) -> usize {
                 false => next_row.push('.'),
             }
         }
+        // Update the prior row and the total safe tiles count
         prior_row = next_row;
         total_safe_tiles += prior_row.iter().filter(|c| **c == '.').count();
     }
@@ -95,6 +100,7 @@ fn calculate_total_safe_tiles(first_row: &str, total_rows: usize) -> usize {
 /// Genenerates the string representing the three characters from the prior row, centred around the
 /// given index. Indices outside of the prior row are treated as safe tiles.
 fn generate_header(prior_row: &[char], index: usize) -> Option<String> {
+    // Handle edge cases for index at start or end of prior row, or out-of-bounds
     if index >= prior_row.len() {
         return None;
     } else if index == 0 {
@@ -102,6 +108,7 @@ fn generate_header(prior_row: &[char], index: usize) -> Option<String> {
     } else if index == prior_row.len() - 1 {
         return Some(format!("{}{}.", prior_row[index - 1], prior_row[index]));
     }
+    // Standard case - index is within bounds and not at start or end of prior row
     Some(format!(
         "{}{}{}",
         prior_row[index - 1],
