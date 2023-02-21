@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::fs;
 use std::time::Instant;
 
@@ -55,15 +56,48 @@ fn solve_part1(num_elves: &usize) -> usize {
     solve_josephus_k2(*num_elves)
 }
 
-/// Solves AOC 2016 Day 19 Part 2 // ###
-fn solve_part2(_num_elves: &usize) -> usize {
-    unimplemented!();
+/// Solves AOC 2016 Day 19 Part 2 // Determines which elf ens up with all of the presents when the
+/// gift exchange game ends (where the elves in play steal the presents from the elf directly
+/// opposite them in the circle).
+fn solve_part2(num_elves: &usize) -> usize {
+    solve_elf_steal_opposite(*num_elves)
 }
 
 /// Provides the number of the last remaining place when the Josephus problem is solved for n with
 /// k=2.
 fn solve_josephus_k2(n: usize) -> usize {
     2 * (n - usize::pow(2, usize::ilog2(n))) + 1
+}
+
+/// Determines the place number of the last elf remaining at the end of the gift exchange game,
+/// where elves steal gifts from the elf opposite them in the circle.
+fn solve_elf_steal_opposite(n: usize) -> usize {
+    // Create the left and right halves of the circle
+    let mut right = VecDeque::from_iter(1..n / 2);
+    let mut left = VecDeque::from_iter((n / 2..=n).rev());
+    while !right.is_empty() && !left.is_empty() {
+        // Steal present from elf
+        if right.len() > left.len() {
+            right.pop_back();
+            if right.is_empty() {
+                break;
+            }
+        } else {
+            left.pop_back();
+            if left.is_empty() {
+                break;
+            }
+        }
+        // Rotate elves counter-clockwise to account of the removed elf
+        left.push_front(right.pop_front().unwrap());
+        right.push_back(left.pop_back().unwrap());
+    }
+    // Return the place number of left remaining elf
+    if right.is_empty() {
+        left.pop_front().unwrap()
+    } else {
+        right.pop_front().unwrap()
+    }
 }
 
 #[cfg(test)]
