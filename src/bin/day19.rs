@@ -39,22 +39,31 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 19 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is number given in the input file.
 fn process_input_file(filename: &str) -> usize {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    raw_input.trim().parse::<usize>().unwrap()
 }
 
-/// Solves AOC 2016 Day 19 Part 1 // ###
-fn solve_part1(_num_elves: &usize) -> usize {
-    unimplemented!();
+/// Solves AOC 2016 Day 19 Part 1 // Determines which elf ends up with all of the presents when the
+/// gift exchange game ends (where elves in play steal the presents from the elf on their left).
+/// The game has been modelled on the Josephus problem with k=2
+/// (https://en.wikipedia.org/wiki/Josephus_problem).
+fn solve_part1(num_elves: &usize) -> usize {
+    solve_josephus_k2(*num_elves)
 }
 
 /// Solves AOC 2016 Day 19 Part 2 // ###
 fn solve_part2(_num_elves: &usize) -> usize {
     unimplemented!();
+}
+
+/// Provides the number of the last remaining place when the Josephus problem is solved for n with
+/// k=2.
+fn solve_josephus_k2(n: usize) -> usize {
+    2 * (n - usize::pow(2, usize::ilog2(n))) + 1
 }
 
 #[cfg(test)]
