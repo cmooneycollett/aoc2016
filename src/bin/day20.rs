@@ -66,9 +66,10 @@ fn solve_part1(ranges: &[RangeInclusive<u32>]) -> u32 {
     find_lowest_value_not_included(ranges).unwrap()
 }
 
-/// Solves AOC 2016 Day 20 Part 2 // ###
-fn solve_part2(_ranges: &[RangeInclusive<u32>]) -> usize {
-    0
+/// Solves AOC 2016 Day 20 Part 2 // Determines the total number of values that are not covered by
+/// the ranges.
+fn solve_part2(ranges: &[RangeInclusive<u32>]) -> usize {
+    find_total_allowed_values(ranges)
 }
 
 /// Finds the lowest value (u32) that is not included in the given ranges (sorted by start value).
@@ -102,6 +103,34 @@ fn find_lowest_value_not_included(ranges: &[RangeInclusive<u32>]) -> Option<u32>
         }
     }
     None
+}
+
+/// Finds the total number of u32 values that are not included in the given ranges (sorted by start
+/// value).
+fn find_total_allowed_values(ranges: &[RangeInclusive<u32>]) -> usize {
+    let mut allowed_count: usize = u32::MAX as usize + 1;
+    let mut lowest_start: Option<u32> = None;
+    let mut highest_end: Option<u32> = None;
+    for r in ranges {
+        if highest_end.is_none() {
+            lowest_start = Some(*r.start());
+            highest_end = Some(*r.end());
+        } else if *r.start() > highest_end.unwrap()
+            && u32::abs_diff(*r.start(), highest_end.unwrap()) >= 2
+        {
+            // Reduce the allowed count by the size of the surpassed range
+            allowed_count -=
+                u32::abs_diff(lowest_start.unwrap(), highest_end.unwrap()) as usize + 1;
+            // Update the start and end trackers per the current range
+            lowest_start = Some(*r.start());
+            highest_end = Some(*r.end());
+        } else if *r.end() > highest_end.unwrap() {
+            highest_end = Some(*r.end());
+        }
+    }
+    // Adjust the allowed count for the final section of overlapping range
+    allowed_count -= u32::abs_diff(lowest_start.unwrap(), highest_end.unwrap()) as usize + 1;
+    allowed_count
 }
 
 #[cfg(test)]
