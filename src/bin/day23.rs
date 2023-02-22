@@ -41,22 +41,27 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 23 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is AssembunnyInterpreter initialised with the operations given in the input file.
 fn process_input_file(filename: &str) -> AssembunnyInterpreter {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    AssembunnyInterpreter::new(&raw_input).unwrap()
 }
 
-/// Solves AOC 2016 Day 23 Part 1 // ###
-fn solve_part1(_interpreter: &AssembunnyInterpreter) -> isize {
-    unimplemented!();
+/// Solves AOC 2016 Day 23 Part 1 // Runs the program in the assembunny code interpreter with
+/// register "a" initialised to 7 (all others initialised to 0) and returns the value saved to
+/// register "a" (the value that should be sent to the safe).
+fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
+    let mut interpreter = interpreter.clone();
+    interpreter.set_register('a', 7).unwrap();
+    interpreter.execute().unwrap();
+    interpreter.get_register('a').unwrap()
 }
 
 /// Solves AOC 2016 Day 23 Part 2 // ###
 fn solve_part2(_interpreter: &AssembunnyInterpreter) -> isize {
-    unimplemented!();
+    0
 }
 
 #[cfg(test)]
