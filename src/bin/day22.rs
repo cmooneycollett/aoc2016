@@ -1,9 +1,22 @@
+use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;
+
+use fancy_regex::Regex;
+
+use aoc_utils::cartography::Point2D;
 
 const PROBLEM_NAME: &str = "Grid Computing";
 const PROBLEM_INPUT_FILE: &str = "./input/day22.txt";
 const PROBLEM_DAY: u64 = 22;
+
+/// Represents the details for data held in a single node.
+struct NodeData {
+    _size: usize,     // Terabytes
+    used: usize,      // Terabytes
+    available: usize, // Terabytes
+    _used_pct: usize,
+}
 
 /// Processes the AOC 2016 Day 22 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
@@ -39,22 +52,71 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 22 input file in the format required by the solver functions.
-/// Returned value is ###.
-fn process_input_file(filename: &str) -> String {
+/// Returned value is hashmap mapping locations to the NodeData details for the data held at the
+/// location.
+fn process_input_file(filename: &str) -> HashMap<Point2D, NodeData> {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    let regex_line =
+        Regex::new(r"^/dev/grid/node-x(\d+)-y(\d+)\s+(\d+)T\s+(\d+)T\s+(\d+)T\s+(\d+)%$").unwrap();
+    let mut output: HashMap<Point2D, NodeData> = HashMap::new();
+    for line in raw_input
+        .lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .skip(2)
+    {
+        if let Ok(Some(caps)) = regex_line.captures(line) {
+            // Extract location and NodeData details from the input line
+            let x = caps[1].parse::<i64>().unwrap();
+            let y = caps[2].parse::<i64>().unwrap();
+            let size = caps[3].parse::<usize>().unwrap();
+            let used = caps[4].parse::<usize>().unwrap();
+            let available = caps[5].parse::<usize>().unwrap();
+            let used_pct = caps[6].parse::<usize>().unwrap();
+            // Create key and value
+            let loc = Point2D::new(x, y);
+            let node_data = NodeData {
+                _size: size,
+                used,
+                available,
+                _used_pct: used_pct,
+            };
+            output.insert(loc, node_data);
+        } else {
+            panic!("Bad format input line! // {line}");
+        }
+    }
+    output
 }
 
-/// Solves AOC 2016 Day 22 Part 1 // ###
-fn solve_part1(_input: &str) -> usize {
-    unimplemented!();
+/// Solves AOC 2016 Day 22 Part 1 // Determines the number of viable pairs of nodes.
+fn solve_part1(nodes: &HashMap<Point2D, NodeData>) -> usize {
+    count_viable_pairs(nodes)
 }
 
 /// Solves AOC 2016 Day 22 Part 2 // ###
-fn solve_part2(_input: &str) -> usize {
-    unimplemented!();
+fn solve_part2(_input: &HashMap<Point2D, NodeData>) -> usize {
+    0
+}
+
+/// Determines the number of viable pairs of nodes.
+fn count_viable_pairs(nodes: &HashMap<Point2D, NodeData>) -> usize {
+    let mut viable_pairs: usize = 0;
+    for (a_loc, a_node_data) in nodes.iter() {
+        // Pair is node viable is Node A is empty
+        if a_node_data.used == 0 {
+            continue;
+        }
+        // Check if Node B has enough available space to fit the Node A used space
+        for (_, b_node_data) in nodes.iter().filter(|(k, _)| *k != a_loc) {
+            if b_node_data.available >= a_node_data.used {
+                viable_pairs += 1;
+            }
+        }
+    }
+    viable_pairs
 }
 
 #[cfg(test)]
