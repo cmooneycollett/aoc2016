@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::time::Instant;
 
@@ -10,12 +10,24 @@ const PROBLEM_NAME: &str = "Grid Computing";
 const PROBLEM_INPUT_FILE: &str = "./input/day22.txt";
 const PROBLEM_DAY: u64 = 22;
 
+/// Lower bound of used percentage for nodes considered as Wall tiles.
+const WALL_NODE_USED_PCT: usize = 90;
+
 /// Represents the details for data held in a single node.
+#[derive(Copy, Clone)]
 struct NodeData {
     _size: usize,     // Terabytes
     used: usize,      // Terabytes
     available: usize, // Terabytes
-    _used_pct: usize,
+    used_pct: usize,
+}
+
+/// Used to model the the nodes based on their used percentage.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum NodeType {
+    Empty,       // Visitable
+    PartialUsed, // Visitable
+    Wall,        // Not visitable
 }
 
 /// Processes the AOC 2016 Day 22 input file and solves both parts of the problem. Solutions are
@@ -81,7 +93,7 @@ fn process_input_file(filename: &str) -> HashMap<Point2D, NodeData> {
                 _size: size,
                 used,
                 available,
-                _used_pct: used_pct,
+                used_pct,
             };
             output.insert(loc, node_data);
         } else {
@@ -96,14 +108,15 @@ fn solve_part1(nodes: &HashMap<Point2D, NodeData>) -> usize {
     count_viable_pairs(nodes)
 }
 
-/// Solves AOC 2016 Day 22 Part 2 // ###
-fn solve_part2(_input: &HashMap<Point2D, NodeData>) -> usize {
-    0
+/// Solves AOC 2016 Day 22 Part 2 // Determines the minimum number of moves required to move the
+/// data at the location with y=0 and the highest x value to the location (0, 0).
+fn solve_part2(nodes: &HashMap<Point2D, NodeData>) -> usize {
+    find_minimum_steps_from_goal_to_target(nodes)
 }
 
 /// Determines the number of viable pairs of nodes.
 fn count_viable_pairs(nodes: &HashMap<Point2D, NodeData>) -> usize {
-    let mut viable_pairs: usize = 0;
+    let mut viable_pairs = 0;
     for (a_loc, a_node_data) in nodes.iter() {
         // Pair is node viable is Node A is empty
         if a_node_data.used == 0 {
@@ -117,6 +130,111 @@ fn count_viable_pairs(nodes: &HashMap<Point2D, NodeData>) -> usize {
         }
     }
     viable_pairs
+}
+
+/// Determines the minimum number of moves required to move the data from the goal node (y=0 and
+/// highest x value) to the target node (0, 0).
+fn find_minimum_steps_from_goal_to_target(nodes: &HashMap<Point2D, NodeData>) -> usize {
+    // Convert the node data map into the node tile map
+    let node_tiles = convert_nodes_to_tiles(nodes);
+    let mut steps: usize = 0;
+    // Determine the shortest path between the goal data node and the target node
+    let max_x = node_tiles.keys().map(|loc| loc.x()).max().unwrap();
+    let mut loc_goal_data = Point2D::new(max_x, 0);
+    let loc_target = Point2D::new(0, 0);
+    let mut shortest_path =
+        find_shortest_path(&node_tiles, &loc_goal_data, &loc_target, None).unwrap();
+    shortest_path.pop_front();
+    // Find the initial location of the empty node
+    let mut loc_empty = *node_tiles
+        .iter()
+        .filter(|(_loc, tile)| **tile == NodeType::Empty)
+        .map(|(loc, _tile)| loc)
+        .next()
+        .unwrap();
+    // Keep moving the empty node to the next location in the goal shortest path to target
+    while !shortest_path.is_empty() {
+        // Find the shortest path between the empty location and next location on goal shortest path
+        let sp_empty_to_goal = find_shortest_path(
+            &node_tiles,
+            &loc_empty,
+            &shortest_path.pop_front().unwrap(),
+            Some(&loc_goal_data),
+        )
+        .unwrap();
+        // Move the goal data into the empty location, and update empty location
+        loc_empty = loc_goal_data;
+        loc_goal_data = *sp_empty_to_goal.back().unwrap();
+        // Increase steps for empty node moving in front of goal, and goal moving into empty loc
+        steps += sp_empty_to_goal.len();
+    }
+    // Move goal node to next location on shortest path
+    steps
+}
+
+/// Converts the node data map into a node tile map.
+fn convert_nodes_to_tiles(nodes: &HashMap<Point2D, NodeData>) -> HashMap<Point2D, NodeType> {
+    let mut output: HashMap<Point2D, NodeType> = HashMap::new();
+    for (&loc, &node_data) in nodes.iter() {
+        if node_data.used_pct == 0 {
+            output.insert(loc, NodeType::Empty);
+        } else if node_data.used_pct < WALL_NODE_USED_PCT {
+            output.insert(loc, NodeType::PartialUsed);
+        } else {
+            output.insert(loc, NodeType::Wall);
+        }
+    }
+    output
+}
+
+/// Finds the shorted path between the start and end locations. Any nodes locations that are equal
+/// to the exclude node or are wall tiles cannot be visited.
+fn find_shortest_path(
+    node_tiles: &HashMap<Point2D, NodeType>,
+    loc_start: &Point2D,
+    loc_end: &Point2D,
+    exclude: Option<&Point2D>,
+) -> Option<VecDeque<Point2D>> {
+    let mut visit_queue: VecDeque<VecDeque<Point2D>> =
+        VecDeque::from([VecDeque::from([*loc_start])]);
+    let mut visited: HashSet<Point2D> = HashSet::from([*loc_start]);
+    while !visit_queue.is_empty() {
+        let path = visit_queue.pop_front().unwrap();
+        for next_loc in get_next_valid_locations(node_tiles, path.back().unwrap()) {
+            // Don't visit node already visited or the excluded node
+            if visited.contains(&next_loc) || exclude.is_some() && *exclude.unwrap() == next_loc {
+                continue;
+            }
+            // Create new path and check if the end location has been reached
+            let mut new_path = path.clone();
+            new_path.push_back(next_loc);
+            if next_loc == *loc_end {
+                return Some(new_path);
+            }
+            // Record the next location as visited
+            visited.insert(next_loc);
+            visit_queue.push_back(new_path);
+        }
+    }
+    None
+}
+
+/// Gets the next valid locations when conducting BFS of node tile map.
+fn get_next_valid_locations(
+    node_tiles: &HashMap<Point2D, NodeType>,
+    loc: &Point2D,
+) -> Vec<Point2D> {
+    let mut output: Vec<Point2D> = vec![];
+    // Record Empty and PartialUsed locations as valid for visiting
+    for next_loc in loc.get_adjacent_points() {
+        if let Some(tile) = node_tiles.get(&next_loc) {
+            match tile {
+                NodeType::Empty | NodeType::PartialUsed => output.push(next_loc),
+                NodeType::Wall => (),
+            }
+        }
+    }
+    output
 }
 
 #[cfg(test)]
