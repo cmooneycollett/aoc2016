@@ -3,11 +3,11 @@ use std::time::Instant;
 
 use aoc2016::utils::bespoke::AssembunnyInterpreter;
 
-const PROBLEM_NAME: &str = "Leonardo's Monorail";
-const PROBLEM_INPUT_FILE: &str = "./input/day12.txt";
-const PROBLEM_DAY: u64 = 12;
+const PROBLEM_NAME: &str = "Safe Cracking";
+const PROBLEM_INPUT_FILE: &str = "./input/day23.txt";
+const PROBLEM_DAY: u64 = 23;
 
-/// Processes the AOC 2016 Day 12 input file and solves both parts of the problem. Solutions are
+/// Processes the AOC 2016 Day 23 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
 pub fn main() {
     let start = Instant::now();
@@ -40,8 +40,8 @@ pub fn main() {
     println!("==================================================");
 }
 
-/// Processes the AOC 2016 Day 12 input file in the format required by the solver functions.
-/// Returned value is Assembunny interpreter created from the instructions listed in the iput file.
+/// Processes the AOC 2016 Day 23 input file in the format required by the solver functions.
+/// Returned value is AssembunnyInterpreter initialised with the operations given in the input file.
 fn process_input_file(filename: &str) -> AssembunnyInterpreter {
     // Read contents of problem input file
     let raw_input = fs::read_to_string(filename).unwrap();
@@ -49,19 +49,22 @@ fn process_input_file(filename: &str) -> AssembunnyInterpreter {
     AssembunnyInterpreter::new(&raw_input).unwrap()
 }
 
-/// Solves AOC 2016 Day 12 Part 1 // Returns the value held in register 'a' of the Assembunny
-/// interpreter after executing the program.
+/// Solves AOC 2016 Day 23 Part 1 // Runs the program in the assembunny code interpreter with
+/// register "a" initialised to 7 (all others initialised to 0) and returns the value saved to
+/// register "a" (the value that should be sent to the safe).
 fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
     let mut interpreter = interpreter.clone();
+    interpreter.set_register('a', 7).unwrap();
     interpreter.execute().unwrap();
     interpreter.get_register('a').unwrap()
 }
 
-/// Solves AOC 2016 Day 12 Part 2 // Returns the value held in register 'a' of the Assembunny
-/// interpreter after executing the program, with register 'c' initialised to 1.
+/// Solves AOC 2016 Day 23 Part 2 // Runs the program in the assembunny code interpreter with
+/// register "a" initialised to 12 (all others initialised to 0) and returns the value saved to
+/// register "a" (the value that should be sent to the safe).
 fn solve_part2(interpreter: &AssembunnyInterpreter) -> isize {
     let mut interpreter = interpreter.clone();
-    interpreter.set_register('c', 1).unwrap();
+    interpreter.set_register('a', 12).unwrap();
     interpreter.execute().unwrap();
     interpreter.get_register('a').unwrap()
 }
@@ -70,19 +73,19 @@ fn solve_part2(interpreter: &AssembunnyInterpreter) -> isize {
 mod test {
     use super::*;
 
-    /// Tests the Day 12 Part 1 solver method against the actual problem solution.
+    /// Tests the Day 23 Part 1 solver method against the actual problem solution.
     #[test]
-    fn test_day12_part1_actual() {
+    fn test_day23_part1_actual() {
         let input = process_input_file(PROBLEM_INPUT_FILE);
         let solution = solve_part1(&input);
-        assert_eq!(318003, solution);
+        assert_eq!(12330, solution);
     }
 
-    /// Tests the Day 12 Part 2 solver method against the actual problem solution.
+    /// Tests the Day 23 Part 2 solver method against the actual problem solution.
     #[test]
-    fn test_day12_part2_actual() {
+    fn test_day23_part2_actual() {
         let input = process_input_file(PROBLEM_INPUT_FILE);
         let solution = solve_part2(&input);
-        assert_eq!(9227657, solution);
+        assert_eq!(479008890, solution);
     }
 }
