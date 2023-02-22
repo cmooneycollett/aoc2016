@@ -1,6 +1,6 @@
-use std::fs;
 use std::str::FromStr;
 use std::time::Instant;
+use std::{fs, iter};
 
 use fancy_regex::Regex;
 use lazy_static::lazy_static;
@@ -10,7 +10,7 @@ const PROBLEM_INPUT_FILE: &str = "./input/day21.txt";
 const PROBLEM_DAY: u64 = 21;
 
 const PART1_PASSWORD: &str = "abcdefgh";
-const _PART2_PASSWORD: &str = "fbgdceah";
+const PART2_PASSWORD: &str = "fbgdceah";
 
 lazy_static! {
     static ref REGEX_SWAP_POSITION: Regex =
@@ -30,6 +30,10 @@ lazy_static! {
 /// Custom error type to indicate that the parsing of an Operation from given string has failed.
 #[derive(Debug)]
 struct ParseOperationError;
+
+/// Custom error type to indicate that a scramble or unscramble operation has failed.
+#[derive(Debug)]
+struct ScrambleOperationError;
 
 /// Represents the different operations in the scrambling function.
 #[derive(Clone, Copy)]
@@ -130,63 +134,203 @@ fn solve_part1(operations: &[Operation]) -> String {
     apply_scramble_operations(PART1_PASSWORD, operations).unwrap()
 }
 
-/// Solves AOC 2016 Day 21 Part 2 // ###
-fn solve_part2(_operations: &[Operation]) -> String {
-    String::new()
+/// Solves AOC 2016 Day 21 Part 2 // Determines the result of unscrambling the string "fbgdceah".
+fn solve_part2(operations: &[Operation]) -> String {
+    apply_unscramble_operations(PART2_PASSWORD, operations).unwrap()
 }
 
 /// Applies the scramble operations to the input string and returns the result.
-fn apply_scramble_operations(s: &str, operations: &[Operation]) -> Option<String> {
+fn apply_scramble_operations(
+    s: &str,
+    operations: &[Operation],
+) -> Result<String, ScrambleOperationError> {
     let mut output = s.chars().collect::<Vec<char>>();
     for &op in operations.iter() {
         match op {
             Operation::SwapPosition { pos_x, pos_y } => {
-                if pos_x >= output.len() || pos_y >= output.len() {
-                    return None;
-                }
-                let (letter_x, letter_y) = (output[pos_x], output[pos_y]);
-                output[pos_y] = letter_x;
-                output[pos_x] = letter_y;
+                swap_positions(&mut output, pos_x, pos_y)?;
             }
             Operation::SwapLetter { letter_x, letter_y } => {
-                let pos_x = output.iter().position(|c| *c == letter_x)?;
-                let pos_y = output.iter().position(|c| *c == letter_y)?;
-                output[pos_y] = letter_x;
-                output[pos_x] = letter_y;
+                swap_letters(&mut output, letter_x, letter_y)?;
             }
             Operation::RotateLeft { steps } => {
-                for _ in 0..steps {
-                    output.rotate_left(1);
-                }
+                rotate_left_by_steps(&mut output, steps);
             }
             Operation::RotateRight { steps } => {
-                for _ in 0..steps {
-                    output.rotate_right(1);
-                }
+                rotate_right_by_steps(&mut output, steps);
             }
             Operation::RotateBasedLetter { letter } => {
-                let pos = output.iter().position(|c| *c == letter)?;
-                let steps = pos + 1 + (if pos >= 4 { 1 } else { 0 });
-                for _ in 0..steps {
-                    output.rotate_right(1);
-                }
+                rotate_based_on_letter_position(&mut output, letter)?;
             }
             Operation::ReversePositions { start, end } => {
-                if start > end || start >= output.len() || end >= output.len() {
-                    return None;
-                }
-                output[start..=end].reverse();
+                reverse_positions_in_slice(&mut output, start, end)?;
             }
             Operation::MovePosition { pos_x, pos_y } => {
-                if pos_x >= output.len() || pos_y >= output.len() {
-                    return None;
-                }
-                let letter = output.remove(pos_x);
-                output.insert(pos_y, letter);
+                move_positions(&mut output, pos_x, pos_y)?;
             }
         }
     }
-    Some(output.iter().collect::<String>())
+    Ok(output.iter().collect::<String>())
+}
+
+/// Applies the inverse of the given operations to unscrable the input string s.
+fn apply_unscramble_operations(
+    s: &str,
+    operations: &[Operation],
+) -> Result<String, ScrambleOperationError> {
+    let letter_rotation_mapping = determine_letter_rotation_mapping(s.len());
+    let mut output = s.chars().collect::<Vec<char>>();
+    // Apply the inverse of the scramble operations in reverse order to unscramble input string.
+    for &op in operations.iter().rev() {
+        match op {
+            Operation::SwapPosition { pos_x, pos_y } => {
+                swap_positions(&mut output, pos_x, pos_y)?;
+            }
+            Operation::SwapLetter { letter_x, letter_y } => {
+                swap_letters(&mut output, letter_x, letter_y)?;
+            }
+            Operation::RotateLeft { steps } => {
+                rotate_right_by_steps(&mut output, steps);
+            }
+            Operation::RotateRight { steps } => {
+                rotate_left_by_steps(&mut output, steps);
+            }
+            Operation::RotateBasedLetter { letter } => {
+                unscramble_rotate_based_on_letter_position(
+                    &mut output,
+                    letter,
+                    &letter_rotation_mapping,
+                )?;
+            }
+            Operation::ReversePositions { start, end } => {
+                reverse_positions_in_slice(&mut output, start, end)?;
+            }
+            Operation::MovePosition { pos_x, pos_y } => {
+                move_positions(&mut output, pos_y, pos_x)?;
+            }
+        }
+    }
+    Ok(output.iter().collect::<String>())
+}
+
+/// Determines how many right-rotation steps were undertaken for a character to end up at an index
+/// within a string of the given length.
+fn determine_letter_rotation_mapping(length: usize) -> Vec<usize> {
+    let mut output: Vec<usize> = iter::repeat(0).take(length).collect::<Vec<usize>>();
+    for pos in 0..length {
+        let steps = pos + 1 + (if pos >= 4 { 1 } else { 0 });
+        let i = (pos + steps) % length;
+        output[i] = steps;
+    }
+    output
+}
+
+/// Swaps the letters at the two positions.
+fn swap_positions(
+    output: &mut [char],
+    pos_x: usize,
+    pos_y: usize,
+) -> Result<(), ScrambleOperationError> {
+    if pos_x >= output.len() || pos_y >= output.len() {
+        return Err(ScrambleOperationError);
+    }
+    let (letter_x, letter_y) = (output[pos_x], output[pos_y]);
+    output[pos_y] = letter_x;
+    output[pos_x] = letter_y;
+    Ok(())
+}
+
+/// Swap the two letters, irrespective of their location in the output.
+fn swap_letters(
+    output: &mut [char],
+    letter_x: char,
+    letter_y: char,
+) -> Result<(), ScrambleOperationError> {
+    let pos_x = output.iter().position(|c| *c == letter_x);
+    let pos_y = output.iter().position(|c| *c == letter_y);
+    if pos_x.is_none() || pos_y.is_none() {
+        return Err(ScrambleOperationError);
+    }
+    let (pos_x, pos_y) = (pos_x.unwrap(), pos_y.unwrap());
+    output[pos_y] = letter_x;
+    output[pos_x] = letter_y;
+    Ok(())
+}
+
+/// Rotates the output buffer to the left by the given number of steps.
+fn rotate_left_by_steps(output: &mut [char], steps: usize) {
+    for _ in 0..steps {
+        output.rotate_left(1);
+    }
+}
+
+/// Rotates the output buffer to the right by the given number of steps.
+fn rotate_right_by_steps(output: &mut [char], steps: usize) {
+    for _ in 0..steps {
+        output.rotate_right(1);
+    }
+}
+
+/// Reverses the positions of the characters in the slice bounded by the start and end indices
+/// (inclusive).
+fn reverse_positions_in_slice(
+    output: &mut [char],
+    start: usize,
+    end: usize,
+) -> Result<(), ScrambleOperationError> {
+    if start > end || start >= output.len() || end >= output.len() {
+        return Err(ScrambleOperationError);
+    }
+    output[start..=end].reverse();
+    Ok(())
+}
+
+/// Rotates the output buffer to the right based on the index of the given letter prior to rotations
+/// being applied.
+fn rotate_based_on_letter_position(
+    output: &mut [char],
+    letter: char,
+) -> Result<(), ScrambleOperationError> {
+    let pos = output.iter().position(|c| *c == letter);
+    if pos.is_none() {
+        return Err(ScrambleOperationError);
+    }
+    let pos = pos.unwrap();
+    let steps = pos + 1 + (if pos >= 4 { 1 } else { 0 });
+    for _ in 0..steps {
+        output.rotate_right(1);
+    }
+    Ok(())
+}
+
+/// Removes the letter at position x and reinserts it at position y.
+fn move_positions(
+    output: &mut Vec<char>,
+    pos_x: usize,
+    pos_y: usize,
+) -> Result<(), ScrambleOperationError> {
+    if pos_x >= output.len() || pos_y >= output.len() {
+        return Err(ScrambleOperationError);
+    }
+    let letter = output.remove(pos_x);
+    output.insert(pos_y, letter);
+    Ok(())
+}
+
+/// Applies the inverse of a ScrambedBasedLetter operation to the output buffer.
+fn unscramble_rotate_based_on_letter_position(
+    output: &mut [char],
+    letter: char,
+    letter_rotation_mapping: &[usize],
+) -> Result<(), ScrambleOperationError> {
+    let pos = output.iter().position(|c| *c == letter);
+    if pos.is_none() {
+        return Err(ScrambleOperationError);
+    }
+    let pos = pos.unwrap();
+    let steps = letter_rotation_mapping[pos];
+    rotate_left_by_steps(output, steps);
+    Ok(())
 }
 
 #[cfg(test)]
