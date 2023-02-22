@@ -53,7 +53,7 @@ fn process_input_file(filename: &str) -> AssembunnyInterpreter {
 /// interpreter after executing the program.
 fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
     let mut interpreter = interpreter.clone();
-    interpreter.execute();
+    interpreter.execute().unwrap();
     interpreter.get_register('a').unwrap()
 }
 
@@ -61,8 +61,8 @@ fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
 /// interpreter after executing the program, with register 'c' initialised to 1.
 fn solve_part2(interpreter: &AssembunnyInterpreter) -> isize {
     let mut interpreter = interpreter.clone();
-    let _ = interpreter.set_register('c', 1);
-    interpreter.execute();
+    interpreter.set_register('c', 1).unwrap();
+    interpreter.execute().unwrap();
     interpreter.get_register('a').unwrap()
 }
 
