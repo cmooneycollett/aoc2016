@@ -19,6 +19,10 @@ lazy_static! {
 pub struct RegisterDoesNotExist;
 
 /// Custom error type indicating that parsing of Assembunny code has failed.
+///
+/// Examples of situations where this error could occur:
+/// - Converting invalid raw input into an assembunny operation
+/// - Trying to decode an OpArgument register that is a Value variant
 #[derive(Debug)]
 pub struct ParseAssembunnyError;
 
