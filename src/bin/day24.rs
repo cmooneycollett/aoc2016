@@ -89,9 +89,11 @@ fn solve_part1(input: &ProblemInput) -> u64 {
     determine_min_steps_to_visit_all_numbers(grid, numbered_locations, false).unwrap()
 }
 
-/// Solves AOC 2016 Day 24 Part 2 // ###
-fn solve_part2(_input: &ProblemInput) -> u64 {
-    0
+/// Solves AOC 2016 Day 24 Part 2 // Determines the minimum number of steps required to visit every
+/// non-0 number marked on the map at least once and return to the '0' location.
+fn solve_part2(input: &ProblemInput) -> u64 {
+    let (grid, numbered_locations) = input;
+    determine_min_steps_to_visit_all_numbers(grid, numbered_locations, true).unwrap()
 }
 
 /// Determines the minimum number of steps required to visit all of the numbered locations. Includes
