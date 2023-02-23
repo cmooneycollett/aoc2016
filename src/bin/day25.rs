@@ -7,6 +7,8 @@ const PROBLEM_NAME: &str = "Clock Signal";
 const PROBLEM_INPUT_FILE: &str = "./input/day25.txt";
 const PROBLEM_DAY: u64 = 25;
 
+const TONE_SEQUENCE_LENGTH_TARGET: usize = 50;
+
 /// Processes the AOC 2016 Day 25 input file and solves both parts of the problem. Solutions are
 /// printed to stdout.
 pub fn main() {
@@ -41,22 +43,48 @@ pub fn main() {
 }
 
 /// Processes the AOC 2016 Day 25 input file in the format required by the solver functions.
-/// Returned value is ###.
+/// Returned value is assembunny interpreter initialised with the operations contained in the input
+/// file.
 fn process_input_file(filename: &str) -> AssembunnyInterpreter {
     // Read contents of problem input file
-    let _raw_input = fs::read_to_string(filename).unwrap();
+    let raw_input = fs::read_to_string(filename).unwrap();
     // Process input file contents into data structure
-    unimplemented!();
+    AssembunnyInterpreter::new(raw_input.trim()).unwrap()
 }
 
-/// Solves AOC 2016 Day 25 Part 1 // ###
-fn solve_part1(_interpreter: &AssembunnyInterpreter) -> i64 {
-    unimplemented!();
+/// Solves AOC 2016 Day 25 Part 1 // Determines the lowest positive integer value that the 'a'
+/// register needs to be initialised to in order for the interpreter to produce the required clock
+/// signal (indefinitely alternating sequence of 0 and 1).
+fn solve_part1(interpreter: &AssembunnyInterpreter) -> isize {
+    let mut seed = 0;
+    'outer: loop {
+        // Initialise the interpreter with the new seed value
+        seed += 1;
+        let mut interpreter = interpreter.clone();
+        interpreter.set_register('a', seed).unwrap();
+        let mut expected_tones = [0isize, 1isize].iter().cycle();
+        // Check for sequence of good tones
+        'inner: for _ in 0..TONE_SEQUENCE_LENGTH_TARGET {
+            // Resume execution of the program and check that interpreter has not halted
+            interpreter.execute().unwrap();
+            if interpreter.is_halted() {
+                continue 'outer;
+            }
+            // Check if next tone is expected value in 0/1 sequence
+            if let Some(tone) = interpreter.get_next_transmit_value() {
+                if tone == *expected_tones.next().unwrap() {
+                    continue 'inner;
+                }
+            }
+            continue 'outer;
+        }
+        return seed;
+    }
 }
 
-/// Solves AOC 2016 Day 25 Part 2 // ###
+/// Solves AOC 2016 Day 25 Part 2 // Christmas has been saved for 2016!
 fn solve_part2(_interpreter: &AssembunnyInterpreter) -> bool {
-    unimplemented!();
+    true
 }
 
 #[cfg(test)]
@@ -76,6 +104,6 @@ mod test {
     fn test_day25_part2_actual() {
         let input = process_input_file(PROBLEM_INPUT_FILE);
         let solution = solve_part2(&input);
-        assert_eq!(true, solution);
+        assert!(solution);
     }
 }
