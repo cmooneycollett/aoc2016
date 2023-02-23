@@ -1,5 +1,5 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::str::FromStr;
 
 use fancy_regex::Regex;
@@ -11,6 +11,7 @@ lazy_static! {
     static ref REGEX_DEC: Regex = Regex::new(r"^dec ([abcd])$").unwrap();
     static ref REGEX_JNZ: Regex = Regex::new(r"^jnz ([abcd]|-?\d+) ([abcd]|-?\d+)$").unwrap();
     static ref REGEX_TGL: Regex = Regex::new(r"^tgl ([abcd]|-?\d+)$").unwrap();
+    static ref REGEX_OUT: Regex = Regex::new(r"^out ([abcd]|-?\d+)$").unwrap();
 }
 
 /// Custom error type indicating that a specified register does not exist in the Assembunny
@@ -67,14 +68,18 @@ enum Operation {
     },
     /// Toggle
     Tgl { delta: OpArgument },
+    /// Out
+    Out { signal: OpArgument },
 }
 
-/// Interpreter for the Assembunny code described in AOC 2016 Day 12 and Day 23.
+/// Interpreter for the Assembunny code described in AOC 2016 Day 12, Day 23 and Day 25.
 #[derive(Clone)]
 pub struct AssembunnyInterpreter {
     registers: HashMap<char, isize>,
     pc: usize,
     operations: Vec<Operation>,
+    halted: bool,
+    transmit_buffer: VecDeque<isize>,
 }
 
 impl AssembunnyInterpreter {
@@ -103,6 +108,9 @@ impl AssembunnyInterpreter {
             } else if let Ok(Some(caps)) = REGEX_TGL.captures(line) {
                 let delta = OpArgument::from_str(&caps[1])?;
                 operations.push(Operation::Tgl { delta });
+            } else if let Ok(Some(caps)) = REGEX_OUT.captures(line) {
+                let signal = OpArgument::from_str(&caps[1])?;
+                operations.push(Operation::Out { signal });
             } else {
                 return Err(ParseAssembunnyError);
             }
@@ -112,6 +120,8 @@ impl AssembunnyInterpreter {
             registers: HashMap::from([('a', 0), ('b', 0), ('c', 0), ('d', 0)]),
             pc: 0,
             operations,
+            halted: false,
+            transmit_buffer: VecDeque::new(),
         })
     }
 
@@ -143,10 +153,13 @@ impl AssembunnyInterpreter {
     /// Executes the program loaded into the Assembunny interpreter. Halts when the program counter
     /// is outside of the program instruction space.
     pub fn execute(&mut self) -> Result<(), ParseAssembunnyError> {
-        let mut halt = false;
+        if self.halted {
+            return Ok(());
+        }
         loop {
             // Check if the program has halted
-            if halt || self.pc >= self.operations.len() {
+            if self.halted || self.pc >= self.operations.len() {
+                self.halted = true;
                 return Ok(());
             }
             // Process the current operation
@@ -192,7 +205,7 @@ impl AssembunnyInterpreter {
                         // Check if jump would move program counter to left of instruction space
                         if delta < 0 && delta.unsigned_abs() > self.pc {
                             self.pc = 0;
-                            halt = true;
+                            self.halted = true;
                             continue;
                         }
                         // Adjust program counter by jump
@@ -203,7 +216,7 @@ impl AssembunnyInterpreter {
                         }
                         // Check if program counter is to right of instruction space
                         if self.pc >= self.operations.len() {
-                            halt = true;
+                            self.halted = true;
                             continue;
                         }
                         // Compensate for post instruction program counter increment
@@ -233,12 +246,29 @@ impl AssembunnyInterpreter {
                             register: delta,
                         },
                         Operation::Tgl { delta } => Operation::Inc { register: delta },
+                        Operation::Out { signal } => Operation::Inc { register: signal },
                     }
+                }
+                Operation::Out { signal } => {
+                    let signal = self.get_op_argument_value(&signal);
+                    self.transmit_buffer.push_back(signal);
+                    self.pc += 1;
+                    return Ok(());
                 }
             }
             // Go to the next instruction
             self.pc += 1;
         }
+    }
+
+    /// Gets the next value in the transmit buffer.
+    pub fn get_next_transmit_value(&mut self) -> Option<isize> {
+        self.transmit_buffer.pop_front()
+    }
+
+    /// Checks if the interpreter has halted execution.
+    pub fn is_halted(&self) -> bool {
+        self.halted
     }
 
     /// Looks up the value of the OpArgument in the Assembunny interpreter registers.
